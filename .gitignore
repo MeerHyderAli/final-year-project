@@ -45,3 +45,6 @@ ai-service/eval/real-photos/
 Thumbs.db
 *.log
 coverage/
+
+# --- local run artifacts -----------------------------------------------------
+.logs/
