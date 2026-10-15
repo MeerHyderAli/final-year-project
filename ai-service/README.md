@@ -89,6 +89,40 @@ hole; an air filter really is a bright, highly textured panel. These features ma
 task learnable on a small dataset. `train/train.py --backbone mobilenet` is the
 documented upgrade path for when the dataset grows.
 
+## Optional: use a cloud vision model instead
+
+The local model's weakness is real photographs (0.258). A frontier vision model has
+seen millions of them and will do far better. Enable it with two variables:
+
+```bash
+export VISION_PROVIDER=openai          # or gemini | anthropic
+export VISION_API_KEY=sk-...           # or OPENAI_API_KEY / GEMINI_API_KEY / ANTHROPIC_API_KEY
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+`GET /health` reports the active provider. `app/cloud_vision.py` implements all three;
+requests use stdlib `urllib`, so there is no new dependency.
+
+**What this fixes:** real-photo identification, which is the local model's weak point.
+
+**What it does NOT fix — and this is the point:** a vision model, however good, still
+returns a **category**. It cannot tell you a part fits a 2019 Swift. Fitment still
+requires a part-number match or a vehicle-catalogue match in the Express API. The
+safety architecture is unchanged, and the cloud path is *not* a shortcut around it.
+
+Three further caveats:
+
+| | |
+|---|---|
+| **Confidence semantics change** | The local model's confidence is a temperature-calibrated softmax. A cloud model's is a self-report, so responses set `confidenceSource: "model_self_report"` and the API warns it is a coarse hint, not a probability. |
+| **Cost and connectivity** | Roughly USD 0.001–0.01 per image, and the offline demo stops working. Keep `local` as the default for demonstrations. |
+| **Privacy** | Every upload leaves the device for a third party. For a deployment handling customer photographs that is a disclosure you owe your users. |
+
+Any failure — no key, a 500, a timeout, an unparseable reply — falls back to the local
+model and logs why. `/predict` never fails because a provider did. That path is tested:
+`tests/test_cloud_vision.py` (44 checks) covers reply parsing, taxonomy validation,
+key resolution, and the failure path.
+
 ## Two bugs worth reading about
 
 Both were found by running the pipeline, and both are the kind that silently produce a

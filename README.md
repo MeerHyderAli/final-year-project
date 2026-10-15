@@ -169,6 +169,41 @@ curl -s -X POST localhost:4000/api/fitment/analyse -H 'Content-Type: application
   -d '{"partId":"part-oil-filter-swift-01","vehicleId":"veh-jcb-3dx-2012"}'
 ```
 
+## Optional: better image recognition via an API key
+
+The local model is weak on real photographs by design of its training data (0.258).
+If you want proper recognition of real parts, point the vision service at a frontier
+model — two environment variables, no code change:
+
+```bash
+export VISION_PROVIDER=openai     # or gemini | anthropic
+export VISION_API_KEY=sk-...
+```
+
+| | Local model (default) | Cloud vision model |
+|---|---|---|
+| Real-photo accuracy | 0.258 | far higher |
+| Cost | free | ~USD 0.001–0.01 / image |
+| Works offline | yes | no |
+| Your photo stays on-device | yes | no |
+| Confidence meaning | calibrated probability | model self-report |
+
+**An API key does not let the AI assert fitment.** A vision model returns a *category*;
+whether a part fits a 2019 Swift still comes from a part-number or vehicle-catalogue
+match. The safety architecture is identical on both paths, and any provider failure
+falls back to the local model rather than failing the request.
+
+See [`ai-service/README.md`](ai-service/README.md) for details, and `.env.example` for
+every setting in one place.
+
+## Running the checks
+
+```bash
+python ai-service/tests/test_cloud_vision.py   # 44 unit checks, no services needed
+bash scripts/verify.sh                         # 26 integration checks, needs services up
+bash scripts/test.sh                           # both
+```
+
 ## Configuration
 
 | Variable | Default | Effect |

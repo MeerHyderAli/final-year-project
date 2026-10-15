@@ -35,6 +35,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 
+from . import cloud_vision
 from . import features as feat
 from .ood import OODDetector
 from .taxonomy import CATEGORIES, CLASS_KEYS, NUM_CLASSES, is_safety_critical, label_for
@@ -96,6 +97,7 @@ def health():
         "status": "ok",
         "service": "autoparts-ai-vision",
         "backend": _BACKEND,
+        "cloudProvider": cloud_vision.status(),
         "modelPath": str(ARTIFACT),
         "modelVersion": _MODEL_META.get("modelVersion", "heuristic-v1"),
         "trained": _MODEL is not None,
@@ -197,6 +199,45 @@ async def predict(file: UploadFile = File(...)):
     started = time.perf_counter()
     raw = await file.read()
     img = _read_image(raw)
+
+    # A cloud provider takes precedence when configured. Any failure degrades to the
+    # local model rather than failing the request — see app/cloud_vision.py.
+    if cloud_vision.enabled():
+        try:
+            cloud = cloud_vision.classify(raw, file.content_type or "image/jpeg")
+            top = cloud["predictions"][0] if cloud["predictions"] else None
+            return {
+                "modelVersion": cloud["modelVersion"],
+                "backend": cloud["backend"],
+                "latencyMs": cloud["latencyMs"],
+                "imageSize": list(img.size),
+                "predictions": cloud["predictions"],
+                "confidenceFloor": APP_CONFIDENCE_FLOOR,
+                "uncertain": top is None or top["confidence"] < APP_CONFIDENCE_FLOOR,
+                "outOfDistribution": None,
+                "categoryOnly": True,
+                "noPartDetected": cloud.get("noPartDetected", False),
+                "confidenceSource": "model_self_report",
+                "reasoning": cloud.get("reasoning", ""),
+                "note": (
+                    "Category prediction from a cloud vision model. Fitment is never "
+                    "inferred from image similarity."
+                ),
+                "validity": {
+                    "inDomainAccuracy": None,
+                    "measuredCrossDomainAccuracy": None,
+                    "confidenceCaveat": (
+                        "This confidence is the model's own self-report, NOT a calibrated "
+                        "probability. Treat it as a coarse hint."
+                    ),
+                    "statement": (
+                        "A vision model identifies the CATEGORY only. It cannot confirm that a part "
+                        "fits a vehicle — that needs a part number or a vehicle catalogue match."
+                    ),
+                },
+            }
+        except cloud_vision.CloudVisionError as exc:
+            print(f"[vision] cloud provider failed, falling back to local model: {exc}")
 
     if _MODEL is None:
         preds = _heuristic_predict(img)
