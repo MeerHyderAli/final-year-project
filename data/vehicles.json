@@ -1,0 +1,134 @@
+[
+  {
+    "id": "veh-maruti-swift-2018-k12m",
+    "make": "Maruti Suzuki",
+    "model": "Swift",
+    "yearFrom": 2018,
+    "yearTo": 2023,
+    "engine": "1.2L K12M Petrol",
+    "fuel": "petrol",
+    "vehicleClass": "car",
+    "aliases": ["swift", "swift k12", "maruti swift"]
+  },
+  {
+    "id": "veh-maruti-alto-k10-2014",
+    "make": "Maruti Suzuki",
+    "model": "Alto K10",
+    "yearFrom": 2014,
+    "yearTo": 2022,
+    "engine": "1.0L K10B Petrol",
+    "fuel": "petrol",
+    "vehicleClass": "car",
+    "aliases": ["alto", "alto k10"]
+  },
+  {
+    "id": "veh-hyundai-i20-2020-kappa",
+    "make": "Hyundai",
+    "model": "i20",
+    "yearFrom": 2020,
+    "yearTo": 2024,
+    "engine": "1.2L Kappa Petrol",
+    "fuel": "petrol",
+    "vehicleClass": "car",
+    "aliases": ["i20", "hyundai i20", "elite i20"]
+  },
+  {
+    "id": "veh-honda-city-2014-ivtec",
+    "make": "Honda",
+    "model": "City",
+    "yearFrom": 2014,
+    "yearTo": 2019,
+    "engine": "1.5L i-VTEC Petrol",
+    "fuel": "petrol",
+    "vehicleClass": "car",
+    "aliases": ["city", "honda city"]
+  },
+  {
+    "id": "veh-tata-nexon-2017-revotron",
+    "make": "Tata",
+    "model": "Nexon",
+    "yearFrom": 2017,
+    "yearTo": 2023,
+    "engine": "1.2L Revotron Petrol",
+    "fuel": "petrol",
+    "vehicleClass": "suv",
+    "aliases": ["nexon", "tata nexon"]
+  },
+  {
+    "id": "veh-mahindra-bolero-2011-di",
+    "make": "Mahindra",
+    "model": "Bolero",
+    "yearFrom": 2011,
+    "yearTo": 2024,
+    "engine": "2.5L DI Diesel",
+    "fuel": "diesel",
+    "vehicleClass": "suv",
+    "aliases": ["bolero", "mahindra bolero"]
+  },
+  {
+    "id": "veh-toyota-innova-crysta-2016-2gd",
+    "make": "Toyota",
+    "model": "Innova Crysta",
+    "yearFrom": 2016,
+    "yearTo": 2023,
+    "engine": "2.4L 2GD-FTV Diesel",
+    "fuel": "diesel",
+    "vehicleClass": "suv",
+    "aliases": ["innova", "innova crysta"]
+  },
+  {
+    "id": "veh-tata-407-2015-tc",
+    "make": "Tata",
+    "model": "407",
+    "yearFrom": 2007,
+    "yearTo": 2024,
+    "engine": "2.0L TCIC Diesel",
+    "fuel": "diesel",
+    "vehicleClass": "truck",
+    "aliases": ["407", "tata 407", "truck"]
+  },
+  {
+    "id": "veh-ashok-leyland-dost-2015",
+    "make": "Ashok Leyland",
+    "model": "Dost",
+    "yearFrom": 2015,
+    "yearTo": 2024,
+    "engine": "1.5L 3-Cylinder Diesel",
+    "fuel": "diesel",
+    "vehicleClass": "truck",
+    "aliases": ["dost", "ashok leyland dost"]
+  },
+  {
+    "id": "veh-mahindra-575di-2005",
+    "make": "Mahindra",
+    "model": "575 DI",
+    "yearFrom": 2005,
+    "yearTo": 2024,
+    "engine": "2.9L 4-Cylinder Diesel",
+    "fuel": "diesel",
+    "vehicleClass": "tractor",
+    "aliases": ["575", "575 di", "mahindra tractor"]
+  },
+  {
+    "id": "veh-john-deere-5050d-2010",
+    "make": "John Deere",
+    "model": "5050 D",
+    "yearFrom": 2010,
+    "yearTo": 2024,
+    "engine": "2.9L 3-Cylinder Diesel",
+    "fuel": "diesel",
+    "vehicleClass": "tractor",
+    "aliases": ["5050", "john deere"]
+  },
+  {
+    "id": "veh-jcb-3dx-2012",
+    "make": "JCB",
+    "model": "3DX",
+    "yearFrom": 2012,
+    "yearTo": 2024,
+    "engine": "4.4L 4-Cylinder Turbo Diesel",
+    "fuel": "diesel",
+    "vehicleClass": "heavy_equipment",
+    "aliases": ["3dx", "jcb", "backhoe"]
+  }
+]

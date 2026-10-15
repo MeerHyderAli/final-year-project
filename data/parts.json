@@ -1,0 +1,466 @@
+[
+  {
+    "id": "part-oil-filter-swift-01",
+    "category": "oil_filter",
+    "name": "Engine Oil Filter \u2014 Maruti K-Series",
+    "brand": "Maruti Genuine Parts (MGP)",
+    "partNumber": "16510-61A31",
+    "condition": "genuine",
+    "vehicleClass": [
+      "car"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-maruti-alto-k10-2014"
+    ],
+    "specs": {
+      "threadSize": "M20 x 1.5",
+      "heightMm": 78,
+      "outerDiaMm": 68
+    },
+    "imageHints": [
+      "cylinder",
+      "metal",
+      "small"
+    ]
+  },
+  {
+    "id": "part-oil-filter-innova-02",
+    "category": "oil_filter",
+    "name": "Engine Oil Filter \u2014 Toyota 2GD-FTV",
+    "brand": "Toyota Genuine",
+    "partNumber": "90915-YZZE1",
+    "condition": "genuine",
+    "vehicleClass": [
+      "suv"
+    ],
+    "fitsVehicleIds": [
+      "veh-toyota-innova-crysta-2016-2gd"
+    ],
+    "specs": {
+      "threadSize": "M20 x 1.5",
+      "heightMm": 85,
+      "outerDiaMm": 76
+    },
+    "imageHints": [
+      "cylinder",
+      "metal",
+      "medium"
+    ]
+  },
+  {
+    "id": "part-oil-filter-bosch-03",
+    "category": "oil_filter",
+    "name": "Engine Oil Filter \u2014 Bosch Value Line",
+    "brand": "Bosch",
+    "partNumber": "0986452036",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "car",
+      "suv"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-hyundai-i20-2020-kappa",
+      "veh-tata-nexon-2017-revotron"
+    ],
+    "specs": {
+      "threadSize": "M20 x 1.5",
+      "heightMm": 79,
+      "outerDiaMm": 65
+    },
+    "imageHints": [
+      "cylinder",
+      "blue",
+      "small"
+    ]
+  },
+  {
+    "id": "part-air-filter-swift-04",
+    "category": "air_filter",
+    "name": "Air Filter Panel \u2014 Maruti K-Series",
+    "brand": "Maruti Genuine Parts (MGP)",
+    "partNumber": "13780-69L00",
+    "condition": "genuine",
+    "vehicleClass": [
+      "car"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-maruti-alto-k10-2014"
+    ],
+    "specs": {
+      "form": "panel",
+      "lengthMm": 246,
+      "widthMm": 158,
+      "heightMm": 44
+    },
+    "imageHints": [
+      "panel",
+      "rectangular",
+      "paper"
+    ]
+  },
+  {
+    "id": "part-air-filter-mann-05",
+    "category": "air_filter",
+    "name": "Air Filter Panel \u2014 Mann Filter",
+    "brand": "Mann-Filter",
+    "partNumber": "C 25 114",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "car"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-hyundai-i20-2020-kappa"
+    ],
+    "specs": {
+      "form": "panel",
+      "lengthMm": 250,
+      "widthMm": 162,
+      "heightMm": 46
+    },
+    "imageHints": [
+      "panel",
+      "rectangular",
+      "yellow"
+    ]
+  },
+  {
+    "id": "part-fuel-filter-bolero-06",
+    "category": "fuel_filter",
+    "name": "Diesel Fuel Filter \u2014 Mahindra DI",
+    "brand": "Mahindra Genuine",
+    "partNumber": "0305DA0040N",
+    "condition": "genuine",
+    "vehicleClass": [
+      "suv",
+      "tractor"
+    ],
+    "fitsVehicleIds": [
+      "veh-mahindra-bolero-2011-di",
+      "veh-mahindra-575di-2005"
+    ],
+    "specs": {
+      "threadSize": "M16 x 1.5",
+      "heightMm": 92,
+      "outerDiaMm": 80
+    },
+    "imageHints": [
+      "cylinder",
+      "black",
+      "medium"
+    ]
+  },
+  {
+    "id": "part-fuel-filter-bosch-07",
+    "category": "fuel_filter",
+    "name": "Diesel Fuel Filter \u2014 Bosch",
+    "brand": "Bosch",
+    "partNumber": "0450905273",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "truck",
+      "heavy_equipment"
+    ],
+    "fitsVehicleIds": [
+      "veh-tata-407-2015-tc",
+      "veh-jcb-3dx-2012",
+      "veh-ashok-leyland-dost-2015"
+    ],
+    "specs": {
+      "threadSize": "M16 x 1.5",
+      "heightMm": 110,
+      "outerDiaMm": 88
+    },
+    "imageHints": [
+      "cylinder",
+      "silver",
+      "large"
+    ]
+  },
+  {
+    "id": "part-brake-pad-swift-08",
+    "category": "brake_pad",
+    "name": "Front Brake Pad Set \u2014 Maruti Swift",
+    "brand": "TVS Girling",
+    "partNumber": "TVS-GP-SWFT-F",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "car"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-maruti-alto-k10-2014"
+    ],
+    "specs": {
+      "thicknessMm": 16.5,
+      "setOf": 4,
+      "position": "front"
+    },
+    "imageHints": [
+      "flat",
+      "rectangular",
+      "metal",
+      "pair"
+    ]
+  },
+  {
+    "id": "part-brake-pad-nexon-09",
+    "category": "brake_pad",
+    "name": "Front Brake Pad Set \u2014 Tata Nexon",
+    "brand": "Endurance Technologies",
+    "partNumber": "EN-2665-F",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "suv"
+    ],
+    "fitsVehicleIds": [
+      "veh-tata-nexon-2017-revotron"
+    ],
+    "specs": {
+      "thicknessMm": 17.2,
+      "setOf": 4,
+      "position": "front"
+    },
+    "imageHints": [
+      "flat",
+      "rectangular",
+      "metal",
+      "pair"
+    ]
+  },
+  {
+    "id": "part-belt-gates-10",
+    "category": "belt",
+    "name": "V-Ribbed Drive Belt 4PK690",
+    "brand": "Gates",
+    "partNumber": "4PK690",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "car"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-honda-city-2014-ivtec",
+      "veh-hyundai-i20-2020-kappa"
+    ],
+    "specs": {
+      "ribs": 4,
+      "lengthMm": 690,
+      "widthMm": 14.2
+    },
+    "imageHints": [
+      "strip",
+      "black",
+      "long",
+      "rubber"
+    ]
+  },
+  {
+    "id": "part-belt-leyland-11",
+    "category": "belt",
+    "name": "Truck Drive Belt \u2014 Heavy Duty",
+    "brand": "Fenner",
+    "partNumber": "FEN-8PK1175",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "truck",
+      "heavy_equipment"
+    ],
+    "fitsVehicleIds": [
+      "veh-tata-407-2015-tc",
+      "veh-jcb-3dx-2012"
+    ],
+    "specs": {
+      "ribs": 8,
+      "lengthMm": 1175,
+      "widthMm": 28.4
+    },
+    "imageHints": [
+      "strip",
+      "black",
+      "long",
+      "rubber"
+    ]
+  },
+  {
+    "id": "part-spark-plug-ngk-12",
+    "category": "spark_plug",
+    "name": "Spark Plug BKR6E \u2014 Nickel",
+    "brand": "NGK",
+    "partNumber": "BKR6E-11",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "car",
+      "suv"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-hyundai-i20-2020-kappa",
+      "veh-honda-city-2014-ivtec"
+    ],
+    "specs": {
+      "threadSize": "M14 x 1.25",
+      "reachMm": 19,
+      "gapMm": 1.1
+    },
+    "imageHints": [
+      "small",
+      "threaded",
+      "metal",
+      "ceramic"
+    ]
+  },
+  {
+    "id": "part-spark-plug-bosch-13",
+    "category": "spark_plug",
+    "name": "Spark Plug FR7DC+ \u2014 Iridium",
+    "brand": "Bosch",
+    "partNumber": "FR7DC+",
+    "condition": "aftermarket",
+    "vehicleClass": [
+      "car",
+      "suv"
+    ],
+    "fitsVehicleIds": [
+      "veh-maruti-swift-2018-k12m",
+      "veh-tata-nexon-2017-revotron"
+    ],
+    "specs": {
+      "threadSize": "M14 x 1.25",
+      "reachMm": 19,
+      "gapMm": 0.9
+    },
+    "imageHints": [
+      "small",
+      "threaded",
+      "metal",
+      "ceramic"
+    ]
+  },
+  {
+    "id": "part-clutch-plate-407-14",
+    "category": "clutch_plate",
+    "name": "Clutch Pressure Plate \u2014 Tata 407",
+    "brand": "Tata Genuine",
+    "partNumber": "2786-001-001",
+    "condition": "genuine",
+    "vehicleClass": [
+      "truck"
+    ],
+    "fitsVehicleIds": [
+      "veh-tata-407-2015-tc"
+    ],
+    "specs": {
+      "diameterMm": 240,
+      "splines": 10
+    },
+    "imageHints": [
+      "disc",
+      "round",
+      "metal",
+      "large"
+    ]
+  },
+  {
+    "id": "part-hydraulic-filter-jcb-15",
+    "category": "hydraulic_filter",
+    "name": "Hydraulic Oil Filter \u2014 JCB 3DX",
+    "brand": "JCB Genuine",
+    "partNumber": "32-925332",
+    "condition": "genuine",
+    "vehicleClass": [
+      "heavy_equipment"
+    ],
+    "fitsVehicleIds": [
+      "veh-jcb-3dx-2012"
+    ],
+    "specs": {
+      "threadSize": "M27 x 2",
+      "heightMm": 145,
+      "outerDiaMm": 95
+    },
+    "imageHints": [
+      "cylinder",
+      "white",
+      "large"
+    ]
+  },
+  {
+    "id": "part-tractor-oil-filter-16",
+    "category": "oil_filter",
+    "name": "Tractor Engine Oil Filter \u2014 Mahindra 575 DI",
+    "brand": "Mahindra Genuine",
+    "partNumber": "005554172R1",
+    "condition": "genuine",
+    "vehicleClass": [
+      "tractor"
+    ],
+    "fitsVehicleIds": [
+      "veh-mahindra-575di-2005",
+      "veh-john-deere-5050d-2010"
+    ],
+    "specs": {
+      "threadSize": "M22 x 1.5",
+      "heightMm": 102,
+      "outerDiaMm": 82
+    },
+    "imageHints": [
+      "cylinder",
+      "green",
+      "medium"
+    ]
+  },
+  {
+    "id": "part-hydraulic-hose-jcb-17",
+    "category": "hydraulic_filter",
+    "name": "Hydraulic Return Hose \u2014 JCB 3DX",
+    "brand": "JCB Genuine",
+    "partNumber": "32-925401",
+    "condition": "genuine",
+    "vehicleClass": [
+      "heavy_equipment"
+    ],
+    "fitsVehicleIds": [
+      "veh-jcb-3dx-2012"
+    ],
+    "specs": {
+      "innerDiaMm": 19,
+      "lengthMm": 1250,
+      "pressureBar": 210
+    },
+    "imageHints": [
+      "tube",
+      "black",
+      "rubber",
+      "long"
+    ]
+  },
+  {
+    "id": "part-brake-shoe-jd-18",
+    "category": "brake_pad",
+    "name": "Rear Brake Shoe Set \u2014 John Deere 5050 D",
+    "brand": "John Deere Genuine",
+    "partNumber": "RE271386",
+    "condition": "genuine",
+    "vehicleClass": [
+      "tractor"
+    ],
+    "fitsVehicleIds": [
+      "veh-john-deere-5050d-2010"
+    ],
+    "specs": {
+      "setOf": 4,
+      "position": "rear",
+      "drumDiaMm": 300
+    },
+    "imageHints": [
+      "curved",
+      "dark",
+      "metal",
+      "set"
+    ]
+  }
+]

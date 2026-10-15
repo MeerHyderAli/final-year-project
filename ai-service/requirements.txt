@@ -1,0 +1,21 @@
+# --- Core (required) ---------------------------------------------------------
+# The service runs in `heuristic` mode without torch, and reports that honestly.
+numpy>=1.26
+pillow>=10.0
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+
+# --- Model training (required to produce a checkpoint) -----------------------
+torch>=2.2
+
+# --- OCR (optional; the /ocr endpoint tries these in order) ------------------
+# Install at most one. The endpoint returns 503 with instructions if none exist.
+# paddleocr>=2.7        # best accuracy on stamped/embossed part numbers
+# easyocr>=1.7
+# pytesseract>=0.3.10   # also needs the `tesseract-ocr` system package
+
+# --- Later upgrade path ------------------------------------------------------
+# When the labelled dataset grows past ~300 images/class, swap the hand-crafted
+# features for a frozen CNN backbone (train/train.py --backbone mobilenet):
+# torchvision>=0.17

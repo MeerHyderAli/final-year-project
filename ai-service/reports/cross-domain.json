@@ -1,0 +1,659 @@
+{
+  "model": "part_classifier.pt",
+  "in_domain": {
+    "n": 97,
+    "accuracy": 0.9691,
+    "macro_f1": 0.9672,
+    "per_class": {
+      "oil_filter": {
+        "precision": 0.9375,
+        "recall": 1.0,
+        "f1": 0.9677,
+        "support": 15
+      },
+      "air_filter": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 14
+      },
+      "fuel_filter": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 15
+      },
+      "brake_pad": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 9
+      },
+      "belt": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 13
+      },
+      "spark_plug": {
+        "precision": 1.0,
+        "recall": 0.7692,
+        "f1": 0.8696,
+        "support": 13
+      },
+      "clutch_plate": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 9
+      },
+      "hydraulic_filter": {
+        "precision": 0.8182,
+        "recall": 1.0,
+        "f1": 0.9,
+        "support": 9
+      }
+    },
+    "confusion_matrix": [
+      [
+        15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        14,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        9,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        13,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        10,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9
+      ]
+    ],
+    "labels": [
+      "oil_filter",
+      "air_filter",
+      "fuel_filter",
+      "brake_pad",
+      "belt",
+      "spark_plug",
+      "clutch_plate",
+      "hydraulic_filter"
+    ],
+    "misclassified": [
+      {
+        "file": "spark_plug_003_syn.jpg",
+        "true": "spark_plug",
+        "predicted": "oil_filter"
+      },
+      {
+        "file": "spark_plug_004_syn.jpg",
+        "true": "spark_plug",
+        "predicted": "hydraulic_filter"
+      },
+      {
+        "file": "spark_plug_044_syn.jpg",
+        "true": "spark_plug",
+        "predicted": "hydraulic_filter"
+      }
+    ]
+  },
+  "cross_domain": {
+    "n": 31,
+    "accuracy": 0.2581,
+    "macro_f1": 0.2173,
+    "per_class": {
+      "oil_filter": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.8571,
+        "support": 4
+      },
+      "air_filter": {
+        "precision": 0.125,
+        "recall": 0.2,
+        "f1": 0.1538,
+        "support": 5
+      },
+      "fuel_filter": {
+        "precision": 0.3333,
+        "recall": 0.4,
+        "f1": 0.3636,
+        "support": 5
+      },
+      "brake_pad": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      "belt": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 5
+      },
+      "spark_plug": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 4
+      },
+      "clutch_plate": {
+        "precision": 0.2857,
+        "recall": 0.5,
+        "f1": 0.3636,
+        "support": 4
+      },
+      "hydraulic_filter": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 3
+      }
+    },
+    "confusion_matrix": [
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        2,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        2,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    ],
+    "labels": [
+      "oil_filter",
+      "air_filter",
+      "fuel_filter",
+      "brake_pad",
+      "belt",
+      "spark_plug",
+      "clutch_plate",
+      "hydraulic_filter"
+    ],
+    "directory": "/home/user/final-year-project/ai-service/eval/real-photos",
+    "predictions": [
+      {
+        "file": "car-clutch-pressure-plate-disc-product-p-1.jpg",
+        "true": "clutch_plate",
+        "predicted": "clutch_plate",
+        "confidence": 0.845,
+        "correct": true,
+        "runnerUp": {
+          "category": "fuel_filter",
+          "confidence": 0.1186
+        }
+      },
+      {
+        "file": "car-clutch-pressure-plate-disc-product-p-2.jpg",
+        "true": "clutch_plate",
+        "predicted": "brake_pad",
+        "confidence": 0.7496,
+        "correct": false,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.1681
+        }
+      },
+      {
+        "file": "car-clutch-pressure-plate-disc-product-p-3.jpg",
+        "true": "clutch_plate",
+        "predicted": "clutch_plate",
+        "confidence": 0.9683,
+        "correct": true,
+        "runnerUp": {
+          "category": "fuel_filter",
+          "confidence": 0.0263
+        }
+      },
+      {
+        "file": "car-clutch-pressure-plate-disc-product-p-4.jpg",
+        "true": "clutch_plate",
+        "predicted": "air_filter",
+        "confidence": 0.9999,
+        "correct": false,
+        "runnerUp": {
+          "category": "oil_filter",
+          "confidence": 0.0001
+        }
+      },
+      {
+        "file": "car-panel-air-filter-element-photo-1.jpg",
+        "true": "air_filter",
+        "predicted": "air_filter",
+        "confidence": 0.9987,
+        "correct": true,
+        "runnerUp": {
+          "category": "hydraulic_filter",
+          "confidence": 0.0005
+        }
+      },
+      {
+        "file": "car-panel-air-filter-element-photo-2.jpg",
+        "true": "air_filter",
+        "predicted": "fuel_filter",
+        "confidence": 0.7641,
+        "correct": false,
+        "runnerUp": {
+          "category": "brake_pad",
+          "confidence": 0.1039
+        }
+      },
+      {
+        "file": "car-panel-air-filter-element-photo-3.jpg",
+        "true": "air_filter",
+        "predicted": "brake_pad",
+        "confidence": 0.4575,
+        "correct": false,
+        "runnerUp": {
+          "category": "fuel_filter",
+          "confidence": 0.4405
+        }
+      },
+      {
+        "file": "car-panel-air-filter-element-photo-4.jpg",
+        "true": "air_filter",
+        "predicted": "brake_pad",
+        "confidence": 0.6907,
+        "correct": false,
+        "runnerUp": {
+          "category": "clutch_plate",
+          "confidence": 0.1236
+        }
+      },
+      {
+        "file": "car-panel-air-filter-element-photo-5.jpg",
+        "true": "air_filter",
+        "predicted": "brake_pad",
+        "confidence": 0.9223,
+        "correct": false,
+        "runnerUp": {
+          "category": "clutch_plate",
+          "confidence": 0.0394
+        }
+      },
+      {
+        "file": "diesel-fuel-filter-cartridge-part-produc-1.jpg",
+        "true": "fuel_filter",
+        "predicted": "air_filter",
+        "confidence": 0.7707,
+        "correct": false,
+        "runnerUp": {
+          "category": "hydraulic_filter",
+          "confidence": 0.1757
+        }
+      },
+      {
+        "file": "diesel-fuel-filter-cartridge-part-produc-2.png",
+        "true": "fuel_filter",
+        "predicted": "fuel_filter",
+        "confidence": 0.8915,
+        "correct": true,
+        "runnerUp": {
+          "category": "spark_plug",
+          "confidence": 0.0533
+        }
+      },
+      {
+        "file": "diesel-fuel-filter-cartridge-part-produc-3.png",
+        "true": "fuel_filter",
+        "predicted": "air_filter",
+        "confidence": 0.9991,
+        "correct": false,
+        "runnerUp": {
+          "category": "oil_filter",
+          "confidence": 0.0008
+        }
+      },
+      {
+        "file": "diesel-fuel-filter-cartridge-part-produc-4.png",
+        "true": "fuel_filter",
+        "predicted": "fuel_filter",
+        "confidence": 0.7688,
+        "correct": true,
+        "runnerUp": {
+          "category": "spark_plug",
+          "confidence": 0.1673
+        }
+      },
+      {
+        "file": "diesel-fuel-filter-cartridge-part-produc-5.webp",
+        "true": "fuel_filter",
+        "predicted": "brake_pad",
+        "confidence": 0.958,
+        "correct": false,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.0199
+        }
+      },
+      {
+        "file": "disc-brake-pads-set-product-photo-3.jpg",
+        "true": "brake_pad",
+        "predicted": "clutch_plate",
+        "confidence": 0.9323,
+        "correct": false,
+        "runnerUp": {
+          "category": "brake_pad",
+          "confidence": 0.0469
+        }
+      },
+      {
+        "file": "engine-oil-filter-spin-on-canister-part--2.jpg",
+        "true": "oil_filter",
+        "predicted": "oil_filter",
+        "confidence": 0.8112,
+        "correct": true,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.1066
+        }
+      },
+      {
+        "file": "engine-oil-filter-spin-on-canister-part--3.jpg",
+        "true": "oil_filter",
+        "predicted": "clutch_plate",
+        "confidence": 0.6141,
+        "correct": false,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.339
+        }
+      },
+      {
+        "file": "engine-oil-filter-spin-on-canister-part--4.jpg",
+        "true": "oil_filter",
+        "predicted": "oil_filter",
+        "confidence": 0.9681,
+        "correct": true,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.0136
+        }
+      },
+      {
+        "file": "engine-oil-filter-spin-on-canister-part--5.jpg",
+        "true": "oil_filter",
+        "predicted": "oil_filter",
+        "confidence": 0.9935,
+        "correct": true,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.003
+        }
+      },
+      {
+        "file": "hydraulic-oil-filter-tractor-heavy-equip-1.jpg",
+        "true": "hydraulic_filter",
+        "predicted": "clutch_plate",
+        "confidence": 0.6841,
+        "correct": false,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.1369
+        }
+      },
+      {
+        "file": "hydraulic-oil-filter-tractor-heavy-equip-2.jpg",
+        "true": "hydraulic_filter",
+        "predicted": "air_filter",
+        "confidence": 0.6003,
+        "correct": false,
+        "runnerUp": {
+          "category": "clutch_plate",
+          "confidence": 0.2236
+        }
+      },
+      {
+        "file": "hydraulic-oil-filter-tractor-heavy-equip-3.jpg",
+        "true": "hydraulic_filter",
+        "predicted": "air_filter",
+        "confidence": 0.4637,
+        "correct": false,
+        "runnerUp": {
+          "category": "clutch_plate",
+          "confidence": 0.3583
+        }
+      },
+      {
+        "file": "serpentine-v-ribbed-drive-belt-product-p-1.jpg",
+        "true": "belt",
+        "predicted": "fuel_filter",
+        "confidence": 0.9637,
+        "correct": false,
+        "runnerUp": {
+          "category": "brake_pad",
+          "confidence": 0.0181
+        }
+      },
+      {
+        "file": "serpentine-v-ribbed-drive-belt-product-p-2.jpg",
+        "true": "belt",
+        "predicted": "fuel_filter",
+        "confidence": 0.9756,
+        "correct": false,
+        "runnerUp": {
+          "category": "clutch_plate",
+          "confidence": 0.0122
+        }
+      },
+      {
+        "file": "serpentine-v-ribbed-drive-belt-product-p-3.jpg",
+        "true": "belt",
+        "predicted": "fuel_filter",
+        "confidence": 0.988,
+        "correct": false,
+        "runnerUp": {
+          "category": "oil_filter",
+          "confidence": 0.0057
+        }
+      },
+      {
+        "file": "serpentine-v-ribbed-drive-belt-product-p-4.jpg",
+        "true": "belt",
+        "predicted": "hydraulic_filter",
+        "confidence": 0.6465,
+        "correct": false,
+        "runnerUp": {
+          "category": "brake_pad",
+          "confidence": 0.1837
+        }
+      },
+      {
+        "file": "serpentine-v-ribbed-drive-belt-product-p-5.jpg",
+        "true": "belt",
+        "predicted": "clutch_plate",
+        "confidence": 0.5777,
+        "correct": false,
+        "runnerUp": {
+          "category": "brake_pad",
+          "confidence": 0.3874
+        }
+      },
+      {
+        "file": "spark-plug-close-up-product-photo-1.jpg",
+        "true": "spark_plug",
+        "predicted": "clutch_plate",
+        "confidence": 0.9919,
+        "correct": false,
+        "runnerUp": {
+          "category": "hydraulic_filter",
+          "confidence": 0.0071
+        }
+      },
+      {
+        "file": "spark-plug-close-up-product-photo-2.jpg",
+        "true": "spark_plug",
+        "predicted": "brake_pad",
+        "confidence": 0.3077,
+        "correct": false,
+        "runnerUp": {
+          "category": "air_filter",
+          "confidence": 0.2834
+        }
+      },
+      {
+        "file": "spark-plug-close-up-product-photo-3.jpg",
+        "true": "spark_plug",
+        "predicted": "air_filter",
+        "confidence": 0.9433,
+        "correct": false,
+        "runnerUp": {
+          "category": "oil_filter",
+          "confidence": 0.0248
+        }
+      },
+      {
+        "file": "spark-plug-close-up-product-photo-5.jpg",
+        "true": "spark_plug",
+        "predicted": "air_filter",
+        "confidence": 0.9856,
+        "correct": false,
+        "runnerUp": {
+          "category": "oil_filter",
+          "confidence": 0.0098
+        }
+      }
+    ]
+  },
+  "domain_gap": 0.711
+}

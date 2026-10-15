@@ -1,0 +1,21 @@
+{
+  "name": "autoparts-ai-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AutoParts AI — Express API: catalogue, fitment, price engine, nearby vendor ranking.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "optionalDependencies": {
+    "mongodb": "^6.12.0"
+  }
+}

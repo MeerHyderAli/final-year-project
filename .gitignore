@@ -1,0 +1,47 @@
+# --- dependencies ------------------------------------------------------------
+node_modules/
+.pnpm-store/
+
+# --- python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# --- builds ------------------------------------------------------------------
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# --- local config / secrets --------------------------------------------------
+.env
+.env.local
+.env.*.local
+
+# --- generated datasets ------------------------------------------------------
+# The labelled dataset is reproducible from a seed, so it is not tracked:
+#   cd ai-service && python -m app.download_images --synthetic --per-class 60 --out ../data/images
+# Regenerate it rather than committing 480 binaries. Real-photo datasets pulled
+# from Openverse carry per-file CC provenance in manifest.json and should be
+# stored outside Git (or via Git LFS) because of licence and size constraints.
+data/images/
+ai-service/data/
+*.feature_cache.npy
+
+# --- third-party imagery -----------------------------------------------------
+# Product photos gathered from search/stock sites are used for cross-domain
+# EVALUATION ONLY. They are third-party copyrighted works: keep them on disk,
+# never in the repository. Rebuild with train/download or your own captures.
+image-search/
+ai-service/eval/real-photos/
+!ai-service/eval/real-photos/README.md
+
+# --- misc --------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.log
+coverage/
