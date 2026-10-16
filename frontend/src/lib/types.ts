@@ -144,15 +144,70 @@ export interface AnalysisResponse {
   generatedAt: string;
 }
 
+export interface DetectedInfo {
+  partNumber: string | null;
+  brand: string | null;
+  catalogueMatch: null | {
+    id: string;
+    name: string;
+    brand: string;
+    partNumber: string;
+    category: string;
+    condition: string;
+  };
+}
+
+export interface DescribeResponse {
+  input: { description: string };
+  modelVersion: string;
+  backend: string | null;
+  latencyMs: number | null;
+  confidenceSource: string | null;
+  predictions: Prediction[];
+  top1: Prediction | null;
+  confidenceThreshold: number;
+  decision: 'accept_category' | 'ask_for_more_info';
+  detected: DetectedInfo;
+  reasoning: string | null;
+  message: string;
+  evidenceStrength: string;
+  caveat: string;
+  nextSteps: string[];
+}
+
+export interface AiHealth {
+  reachable?: boolean;
+  detail?: string;
+  message?: string;
+  engine: string;
+  engines: {
+    cloud: {
+      provider: string;
+      configured: boolean;
+      hasKey: boolean;
+      model: string | null;
+      knownProviders: string[];
+    };
+    local: { available: boolean; testAccuracy: number | null; note: string };
+    heuristic: { available: boolean; confidenceCap: number; note: string };
+  };
+  requiresTraining: boolean;
+  requiresDataset: boolean;
+  warnings: string[];
+}
+
 export interface IdentifyResponse {
   modelVersion: string;
   backend: string | null;
   latencyMs: number | null;
+  confidenceSource: string | null;
   predictions: Prediction[];
   top1: Prediction | null;
   confidenceThreshold: number;
   decision: 'accept_category' | 'ask_for_more_info';
   message: string;
+  detected: DetectedInfo;
+  reasoning: string | null;
   warnings: { code: string; message: string; severity?: string }[];
   outOfDistribution: null | {
     distance: number;

@@ -50,6 +50,43 @@ export async function predictImage({ buffer, filename, mimetype }) {
   }
 }
 
+/**
+ * Text description -> category. Same contract as predictImage, different endpoint.
+ * Used when the user cannot supply a usable photograph.
+ */
+export async function describePart(description) {
+  const form = new FormData();
+  form.append('description', description);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), config.aiTimeoutMs);
+
+  try {
+    const res = await fetch(`${config.aiServiceUrl}/describe`, {
+      method: 'POST',
+      body: form,
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new AiUnavailableError(
+        `identification service responded ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
+      );
+    }
+    return await res.json();
+  } catch (err) {
+    if (err instanceof AiUnavailableError) throw err;
+    throw new AiUnavailableError(
+      err.name === 'AbortError'
+        ? `identification service timed out after ${config.aiTimeoutMs} ms`
+        : `identification service unreachable at ${config.aiServiceUrl}`,
+      err,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function aiHealth() {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 2500);

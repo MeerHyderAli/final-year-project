@@ -6,10 +6,11 @@
 #   bash scripts/test.sh --offline    # skip the suites that need running services
 #
 # Suites:
-#   1. ai-service/tests/test_cloud_vision.py   no services needed, no network needed
-#   2. scripts/verify.sh                       needs the API :4000 and vision :8000
+#   1. ai-service/tests/test_cloud_vision.py        provider parsing/keys/failures, no network
+#   2. ai-service/tests/test_gemini_integration.py  the real Gemini wire format, via a mock
+#   3. scripts/verify.sh                            needs the API :4000 and identify :8000
 #
-# Start the services first with `bash scripts/dev.sh` if the second suite should run.
+# Start the services first with `bash scripts/dev.sh` if the last suite should run.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -27,7 +28,7 @@ PY
 }
 
 echo "════════════════════════════════════════════════════════"
-echo " 1. Cloud vision provider (unit)"
+echo " 1. Identification provider (unit)"
 echo "════════════════════════════════════════════════════════"
 if "$PY" ai-service/tests/test_cloud_vision.py; then
   echo "  -> suite passed"
@@ -37,7 +38,17 @@ fi
 
 echo
 echo "════════════════════════════════════════════════════════"
-echo " 2. Acceptance checks (integration)"
+echo " 2. Gemini wire format (integration, local mock)"
+echo "════════════════════════════════════════════════════════"
+if "$PY" ai-service/tests/test_gemini_integration.py; then
+  echo "  -> suite passed"
+else
+  echo "  -> suite FAILED"; FAILED=1
+fi
+
+echo
+echo "════════════════════════════════════════════════════════"
+echo " 3. Acceptance checks (integration)"
 echo "════════════════════════════════════════════════════════"
 if [[ "${1:-}" == "--offline" ]]; then
   echo "  skipped (--offline)"
@@ -50,6 +61,7 @@ elif port_busy 4000 && port_busy 8000; then
 else
   echo "  SKIPPED — services not running on :4000 and :8000."
   echo "  Start them with:  bash scripts/dev.sh"
+  echo "  (suites 1 and 2 ran without them)"
 fi
 
 echo

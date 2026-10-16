@@ -18,6 +18,7 @@ router.post('/analyse', (req, res) => {
     partNumber,
     category,
     prediction,          // raw output of POST /predict on the AI service
+    visiblePartNumber,   // part number the vision model read OFF the part
     vehicleId, make, model, year, engine,
     lat, lng, radiusKm = 15,
     condition,
@@ -33,22 +34,43 @@ router.post('/analyse', (req, res) => {
   const effectiveCategory = category || partId ? byId('parts', partId)?.category ?? category : top?.category ?? category;
 
   // 1. Resolve the part.
+  //    Priority matters. A part number read off the physical part is the strongest
+  //    evidence available from an image, so it outranks a user-supplied candidate
+  //    and always outranks a category guess.
   let resolvedPartId = partId || null;
+  let resolutionPath = resolvedPartId ? 'explicit_part_id' : null;
+
   if (!resolvedPartId && partNumber) {
-    resolvedPartId = findPartByNumber(partNumber)?.id ?? null;
+    const hit = findPartByNumber(partNumber);
+    if (hit) {
+      resolvedPartId = hit.id;
+      resolutionPath = 'user_part_number';
+    }
+  }
+  if (!resolvedPartId && visiblePartNumber) {
+    const hit = findPartByNumber(visiblePartNumber);
+    if (hit) {
+      resolvedPartId = hit.id;
+      resolutionPath = 'part_number_read_from_photo';
+    }
   }
   if (!resolvedPartId && top?.cataloguePartId) {
     resolvedPartId = top.cataloguePartId;
+    resolutionPath = 'prediction_suggested_part';
   }
-  if (!resolvedPartId && top?.category) {
-    // Category-only prediction: offer the catalogue parts in that category as candidates.
-    resolvedPartId = null;
-  }
+  // A category-only prediction leaves resolvedPartId null on purpose: the catalogue
+  // cannot pick a specific part from a category, and guessing one would be inventing
+  // evidence. The UI offers candidates instead.
 
-  // 2. Fitment verdict.
+  // 2. Fitment verdict. Feed the catalogue-matched number through so the verdict can
+  //    reach `confirmed` — the only verdict that asserts compatibility.
+  const effectivePartNumber =
+    partNumber ||
+    (resolutionPath === 'part_number_read_from_photo' && visiblePartNumber ? visiblePartNumber : undefined);
+
   const fitment = checkFitment({
     partId: resolvedPartId,
-    partNumber,
+    partNumber: effectivePartNumber,
     category: effectiveCategory,
     vehicleId,
     make,
@@ -74,6 +96,22 @@ router.post('/analyse', (req, res) => {
       message:
         `The vision model returned ${(top.confidence * 100).toFixed(0)}% confidence, below the ${(minConfidence * 100).toFixed(0)}% threshold. ` +
         'Confirm the part number or vehicle details.',
+    });
+  }
+  if (visiblePartNumber && resolutionPath === 'part_number_read_from_photo') {
+    warnings.push({
+      code: 'part_number_read_from_photo',
+      message:
+        `Part number "${visiblePartNumber}" was read from your photo and matched the catalogue. ` +
+        'OCR of stamped codes is not infallible — confirm it against the physical label.',
+    });
+  }
+  if (visiblePartNumber && !resolutionPath?.includes('from_photo') && resolutionPath !== 'user_part_number') {
+    warnings.push({
+      code: 'part_number_not_matched',
+      message:
+        `Your photo appears to show part number "${visiblePartNumber}", which is not in the catalogue. ` +
+        'Check it against the printed label — 0/O, 1/I and 8/B are commonly mis-read.',
     });
   }
   if (categorySafety) {
@@ -102,6 +140,17 @@ router.post('/analyse', (req, res) => {
       predictedCategoryLabel: top?.category ? categoryLabel(top.category) : null,
     },
     stage2_fitment: fitment,
+    resolution: {
+      path: resolutionPath,
+      partNumberUsed: effectivePartNumber ?? null,
+      partNumberFromPhoto: visiblePartNumber ?? null,
+      explanation: {
+        explicit_part_id: 'You chose this part from the catalogue.',
+        user_part_number: 'You supplied the part number.',
+        part_number_read_from_photo: 'The part number was read from your photo and matched a catalogue record.',
+        prediction_suggested_part: 'The vision model suggested this catalogue part.',
+      }[resolutionPath] ?? 'No catalogue part was resolved — only a category is known.',
+    },
     stage3_price: price,
     stage4_nearby: nearby,
     warnings,

@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 #
-# Start all three AutoParts AI services with one command.
+# Start the AutoParts AI services with one command.
 #
-#   bash scripts/dev.sh            # start everything
-#   bash scripts/dev.sh --setup    # also install deps + build dataset + train
+#   bash scripts/dev.sh              # start everything
+#   bash scripts/dev.sh --setup      # install deps first (no training, no dataset)
 #
-# Ctrl-C stops all three (they are started as children of this script).
+# Identification runs on the AI provider (Gemini by default). No model training and
+# no image dataset are needed. Without an API key the service still starts and falls
+# back to the local model, if one happens to be present.
 #
-# Ports: vision 8000 · API 4000 · web app 5173
+# Ports: identification 8000 · API 4000 · web app 5173
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -52,32 +54,50 @@ if [[ "${1:-}" == "--setup" ]]; then
   echo "==> installing dependencies"
   ( cd backend  && npm install --no-audit --no-fund )
   ( cd frontend && npm install --no-audit --no-fund )
-  "$PY" -c "import fastapi, torch, numpy, PIL" 2>/dev/null || \
+  "$PY" -c "import fastapi, uvicorn, numpy, PIL" 2>/dev/null || \
     "$PY" -m pip install -r ai-service/requirements.txt
 fi
 
 # ---------------------------------------------------------------- preflight
 echo "==> preflight"
-if ! "$PY" -c "import fastapi, uvicorn" 2>/dev/null; then
-  echo "    !! python deps missing. Run:  pip install -r ai-service/requirements.txt" >&2
-  echo "       or:  bash scripts/dev.sh --setup" >&2
+if ! "$PY" -c "import fastapi, uvicorn, numpy, PIL" 2>/dev/null; then
+  echo "    !! python deps missing. Run:  bash scripts/dev.sh --setup" >&2
   exit 1
 fi
 [ -d backend/node_modules ]  || { echo "    !! backend deps missing. Run: bash scripts/dev.sh --setup" >&2; exit 1; }
 [ -d frontend/node_modules ] || { echo "    !! frontend deps missing. Run: bash scripts/dev.sh --setup" >&2; exit 1; }
 
-if [ ! -d data/images ] || [ -z "$(ls -A data/images/*.jpg 2>/dev/null)" ]; then
-  echo "    dataset missing — generating a synthetic one so training can run"
-  ( cd ai-service && "$PY" -m app.download_images --synthetic --per-class 60 --out ../data/images >/dev/null )
+# Report the identification engine that will actually answer. torch is NOT required.
+PROVIDER="${VISION_PROVIDER:-gemini}"
+export VISION_PROVIDER="$PROVIDER"
+
+if [ -z "${VISION_API_KEY:-}" ]; then
+  case "$PROVIDER" in
+    gemini)    VISION_API_KEY="${GEMINI_API_KEY:-${GOOGLE_API_KEY:-}}" ;;
+    openai)    VISION_API_KEY="${OPENAI_API_KEY:-}" ;;
+    anthropic) VISION_API_KEY="${ANTHROPIC_API_KEY:-}" ;;
+  esac
+  [ -n "${VISION_API_KEY:-}" ] && export VISION_API_KEY
 fi
-if [ ! -f ai-service/models/part_classifier.pt ]; then
-  echo "    no checkpoint — training one (takes a few seconds)"
-  ( cd ai-service && "$PY" train/train.py --data data/images --epochs 80 | tail -8 )
+
+if [ -n "${VISION_API_KEY:-}" ]; then
+  echo "    identification engine : $PROVIDER (API key found)"
+elif [ -f ai-service/models/part_classifier.pt ]; then
+  echo "    identification engine : local checkpoint (no API key found)"
+  echo "                            accurate on test images, WEAK on real photos:"
+  echo "                            export VISION_API_KEY=... for proper identification"
+else
+  echo "    identification engine : none configured"
+  echo "                            photo ID will be degraded; the part-number and"
+  echo "                            vehicle-fitment paths still work exactly."
+  echo "                            To enable: export VISION_API_KEY=your-key"
+fi
+if ! "$PY" -c "import torch" 2>/dev/null; then
+  echo "    note: torch not installed — fine, it is only needed for the"
+  echo "          optional local fallback model."
 fi
 
 # ---------------------------------------------------------------- start
-# Skip any service whose port is already taken, so re-running this script is safe
-# and it never spawns a duplicate that dies with EADDRINUSE.
 start_service() { # <port> <label> <logname> <workdir> <command...>
   local port="$1" label="$2" logname="$3" workdir="$4"; shift 4
   if port_busy "$port"; then
@@ -89,29 +109,33 @@ start_service() { # <port> <label> <logname> <workdir> <command...>
   PIDS+=($!)
 }
 
-start_service 8000 "vision service" vision ai-service "$PY" -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-start_service 4000 "API"            api    backend    node src/server.js
-start_service 5173 "web app"        web    frontend   npm run dev
+start_service 8000 "identification service" identify ai-service "$PY" -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+start_service 4000 "API"                    api      backend    node src/server.js
+start_service 5173 "web app"                web      frontend   npm run dev
 
 echo
 echo "==> waiting for services"
-wait_for 8000 "vision service" || true
-wait_for 4000 "API"            || true
-wait_for 5173 "web app"        || true
+wait_for 8000 "identification service" || true
+wait_for 4000 "API"                    || true
+wait_for 5173 "web app"                || true
 
 echo
 cat <<EOF
 ────────────────────────────────────────────────────────────
   AutoParts AI is up
 
-    Web app          http://localhost:5173      <-- open this
-    API              http://localhost:4000/api
-    Vision service   http://localhost:8000/docs
+    Web app                http://localhost:5173      <-- open this
+    API                    http://localhost:4000/api
+    Identification service http://localhost:8000/docs
 
-  Logs: $LOGDIR/{vision,api,web}.log
+  Logs: $LOGDIR/{identify,api,web}.log
 
   Try it: pick a vehicle (Maruti Suzuki -> Swift -> 2019),
-  then either upload a photo or type part number 16510-61A31.
+  then upload a photo, type part number 16510-61A31,
+  or describe the part in words.
+
+  No API key yet?  bash scripts/check-gemini.sh  will tell you whether image
+  identification will work, rather than leaving you to find out during a demo.
 
   Ctrl-C to stop everything.
 ────────────────────────────────────────────────────────────

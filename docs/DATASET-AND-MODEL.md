@@ -1,4 +1,16 @@
-# Dataset and model
+# Dataset and model — the optional offline study
+
+> **You do not need anything on this page to run the project.**
+>
+> AutoParts AI identifies parts with a vision API (Gemini by default). There is no
+> training step, no image dataset and no GPU in the required workflow. This page
+> documents the **local fallback model**: a small checkpoint kept so the app can demo
+> with no internet and no key. It is optional, it is not installed by default
+> (`ai-service/requirements-local.txt`), and it is measurably worse than the API.
+>
+> It is worth reading anyway, because the numbers below are the strongest argument in
+> the project for its central design rule — and because the same measurements are what
+> led us to stop relying on a trained model for recognition.
 
 ## Headline result — read this first
 
@@ -17,6 +29,11 @@ The model is not merely worse on real photographs — it is **confidently wrong*
 This is the most important result in the project. It does not invalidate the design —
 it **proves** the design. A system that asserted fitment from image similarity would
 send a user to a shop with the wrong part, with the model's full confidence behind it.
+
+It is also why the project's recognition step does not depend on a trained model. A
+model with a 0.711 domain gap is a liability in the one place it is most visible; a
+frontier vision model that has already seen real photographs at scale is the right tool,
+and it costs one API key. We kept the checkpoint, measured it honestly, and moved on.
 
 ## The two datasets
 
@@ -42,7 +59,7 @@ Degradations are applied so the model cannot key on a constant: Gaussian blur
 **Why synthetic at all?** It makes the pipeline reproducible offline, on an exam
 laptop, with no network and no licence questions. It is a *smoke test*, not a dataset.
 
-### 2. Real photographs — what you must collect
+### 2. Real photographs — collected for the study, not required to run the app
 
 The committed cross-domain evaluation used 31 real product photographs. **They are not
 committed**: they are third-party copyrighted works and are git-ignored. The metrics
@@ -140,17 +157,27 @@ space. `app/ood.py` therefore ships as an **advisory** whose own payload states 
 Since neither confidence nor OOD distance is sufficient out-of-domain, the safety
 comes from the product design:
 
-1. The vision model outputs a **category**. It never sees fitment data.
+1. The identification engine outputs a **category**. It never sees fitment data — true
+   of the local checkpoint and of the cloud provider alike.
 2. `MIN_CONFIDENCE = 0.55`; below it the API answers `ask_for_more_info`.
 3. Fitment is asserted **only** from a part-number match or a vehicle-catalogue match.
 4. Safety-critical categories (brake pads, clutch plates) require a part number even
    when the catalogue lists a fitment — verdict `needs_part_number`.
 5. Every response carries the domain-gap advisory, and the UI displays it.
 
-## How to close the gap (future work)
+## How this gap was actually closed
+
+By not training a model. The recognition step now runs on a vision API, which has
+already been trained on real photographs at a scale no undergraduate dataset can
+approach, and which reads labels and embossed codes as well as shapes. That is the
+project's response to its own headline result.
+
+If you *do* want to close the gap the classical way — for a dissertation chapter, or
+because you need a fully offline system — this is the path, in order of value:
 
 1. **Collect 150–300 real photographs per class**, same phone, varied angle, lighting,
-   dirt and wear. This is the single highest-value task.
+   dirt and wear. This is the single highest-value task, and it can only be done by
+   hand.
 2. Re-run the leakage-safe split and retrain; expect the in-domain number to *fall*
    and the real-world number to rise — that is the correct trade.
 3. Only once ≥300 images per class exist, swap the hand-crafted features for a frozen
@@ -158,7 +185,10 @@ comes from the product design:
 4. Re-evaluate with `train/evaluate.py --external-dir …` against photos held out
    entirely from training. Report both numbers, always.
 
-## Reproduce everything
+Steps 1–4 require `pip install -r ai-service/requirements-local.txt` and are **not**
+part of setting up this project.
+
+## Reproduce the study (optional)
 
 ```bash
 cd ai-service

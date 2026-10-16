@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from './lib/api';
-import type { AnalysisResponse, IdentifyResponse, Vehicle } from './lib/types';
+import type { AiHealth, AnalysisResponse, DescribeResponse, IdentifyResponse, Vehicle } from './lib/types';
 import { DEFAULT_ORIGIN, useGeolocation, type Coords } from './lib/useGeolocation';
 import { PhotoUpload } from './components/PhotoUpload';
 import { IdentifyPanel } from './components/IdentifyPanel';
@@ -9,6 +9,8 @@ import { FitmentPanel } from './components/FitmentPanel';
 import { PriceTable } from './components/PriceTable';
 import { NearbyList } from './components/NearbyList';
 import { WarningsBanner } from './components/WarningsBanner';
+import { ProviderStatus } from './components/ProviderStatus';
+import { DescribeInput } from './components/DescribeInput';
 import { Badge, Card, Notice, Spinner } from './components/ui';
 
 export default function App() {
@@ -25,6 +27,8 @@ export default function App() {
   const [origin, setOriginState] = useState<Coords>(DEFAULT_ORIGIN);
   const [radiusKm, setRadiusKm] = useState(15);
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [aiHealth, setAiHealth] = useState<AiHealth | null>(null);
+  const [describeResult, setDescribeResult] = useState<DescribeResponse | null>(null);
 
   const geo = useGeolocation();
   const resultRef = useRef<HTMLDivElement>(null);
@@ -38,6 +42,10 @@ export default function App() {
       .health()
       .then(() => setApiOnline(true))
       .catch(() => setApiOnline(false));
+    api
+      .aiHealth()
+      .then(setAiHealth)
+      .catch(() => setAiHealth(null));
   }, []);
 
   // Keep the object URL tidy — leaking one per upload is a classic React bug.
@@ -54,7 +62,14 @@ export default function App() {
   useEffect(() => setOriginState(geo.origin), [geo.origin]);
 
   const runAnalyse = useCallback(
-    async (override: { partId?: string | null; partNumber?: string | null; prediction?: unknown } = {}) => {
+    async (
+      override: {
+        partId?: string | null;
+        partNumber?: string | null;
+        prediction?: unknown;
+        visiblePartNumber?: string | null;
+      } = {},
+    ) => {
       setBusy('analyse');
       setError(null);
       try {
@@ -69,7 +84,16 @@ export default function App() {
           lat: origin.lat,
           lng: origin.lng,
           radiusKm,
-          prediction: override.prediction ?? (identify ? { predictions: identify.predictions, modelVersion: identify.modelVersion } : undefined),
+          // A part number read off the physical part is the strongest evidence an
+          // image can provide, so it travels with the request and outranks the
+          // category guess when the API resolves the part.
+          visiblePartNumber:
+            override.visiblePartNumber ?? identify?.detected?.partNumber ?? undefined,
+          prediction:
+            override.prediction ??
+            (identify
+              ? { predictions: identify.predictions, modelVersion: identify.modelVersion }
+              : undefined),
         };
         const res = await api.analyse(payload);
         setAnalysis(res);
@@ -91,6 +115,7 @@ export default function App() {
       setFile(f);
       setIdentify(null);
       setAnalysis(null);
+      setDescribeResult(null);
       setPartId(null);
       setPartNumber(null);
       setBusy('identify');
@@ -125,6 +150,7 @@ export default function App() {
     async (value: string) => {
       setPartNumber(value);
       setIdentify(null);
+      setDescribeResult(null);
       setFile(null);
       setBusy('analyse');
       setError(null);
@@ -141,6 +167,25 @@ export default function App() {
       } finally {
         setBusy(null);
       }
+    },
+    [runAnalyse],
+  );
+
+  /** Text description -> category, then run the same fitment/price/nearby pipeline. */
+  const onDescribed = useCallback(
+    async (result: DescribeResponse) => {
+      setIdentify(null);
+      setFile(null);
+      setPartNumber(null);
+      const matchedId = result.detected?.catalogueMatch?.id ?? null;
+      setPartId(matchedId);
+      setDescribeResult(result);
+      await runAnalyse({
+        partId: matchedId,
+        partNumber: result.detected?.partNumber ?? null,
+        prediction: { predictions: result.predictions, modelVersion: result.modelVersion },
+        visiblePartNumber: result.detected?.partNumber ?? null,
+      });
     },
     [runAnalyse],
   );
@@ -192,8 +237,11 @@ export default function App() {
 
       <main className="layout">
         <div className="col-left">
+          <ProviderStatus health={aiHealth} />
+
           <Card step="Step 1" title="Identify the part">
             <PhotoUpload onFile={onFile} busy={busy === 'identify'} previewUrl={previewUrl} onUsePartNumber={onPartNumber} />
+            <DescribeInput onResult={onDescribed} disabled={busy === 'identify'} />
           </Card>
 
           {busy === 'identify' && <Spinner label="Running the vision model…" />}
@@ -206,6 +254,50 @@ export default function App() {
 
           {identify && (
             <IdentifyPanel identify={identify} onSelectCandidate={onSelectCandidate} selectedPartId={partId} />
+          )}
+
+          {describeResult && (
+            <Card
+              step="Step 2"
+              title="What the description suggests"
+              right={<Badge tone="warn">weaker than a photo</Badge>}
+            >
+              <p className="muted small">{describeResult.caveat}</p>
+              {describeResult.reasoning && (
+                <p className="muted small">
+                  <strong>Model reasoning:</strong> {describeResult.reasoning}
+                </p>
+              )}
+              <p>{describeResult.message}</p>
+              {describeResult.top1 && (
+                <div className="prediction prediction--top">
+                  <div className="prediction__head">
+                    <strong>{describeResult.top1.label}</strong>
+                    <span className="muted small">{Math.round(describeResult.top1.confidence * 100)}%</span>
+                  </div>
+                  <div className="bar" aria-hidden="true">
+                    <span className="bar__fill" style={{ width: `${Math.max(2, describeResult.top1.confidence * 100)}%` }} />
+                  </div>
+                  {describeResult.top1.catalogueCandidates.length > 0 && (
+                    <div className="candidates">
+                      <span className="muted small">Catalogue parts in this category:</span>
+                      <div className="chips">
+                        {describeResult.top1.catalogueCandidates.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            className={`chip chip--button ${partId === c.id ? 'chip--selected' : ''}`}
+                            onClick={() => onSelectCandidate(c.id)}
+                          >
+                            {c.name} · {c.brand} · {c.partNumber}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
           )}
 
           <VehiclePicker vehicles={vehicles} value={vehicle} onChange={(v) => { setVehicle(v); }} />

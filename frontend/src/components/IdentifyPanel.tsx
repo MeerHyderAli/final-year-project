@@ -20,6 +20,7 @@ export function IdentifyPanel({
 }) {
   const accepted = identify.decision === 'accept_category';
   const cross = identify.validity?.measuredCrossDomainAccuracy;
+  const detected = identify.detected;
 
   return (
     <Card
@@ -33,6 +34,41 @@ export function IdentifyPanel({
         </div>
       }
     >
+      {/* The single best outcome from a photo: a part number printed on the part.
+          That upgrades the request from "a guess" to an exact catalogue lookup. */}
+      {detected?.partNumber && (
+        <Notice
+          tone={detected.catalogueMatch ? 'good' : 'warn'}
+          title={detected.catalogueMatch ? 'Part number read from your photo' : 'Part number read, but not in the catalogue'}
+        >
+          Read <strong>{detected.partNumber}</strong>
+          {detected.brand ? ` (${detected.brand})` : ''}
+          {detected.catalogueMatch ? (
+            <>
+              {' '}— matched catalogue record{' '}
+              <strong>
+                {detected.catalogueMatch.partNumber} · {detected.catalogueMatch.name}
+              </strong>
+              . Confirm it against the physical label before ordering.
+            </>
+          ) : (
+            <> — check it against the label. 0/O, 1/I and 8/B are commonly mis-read.</>
+          )}
+        </Notice>
+      )}
+
+      {identify.reasoning && (
+        <p className="muted small">
+          <strong>Model reasoning:</strong> {identify.reasoning}
+        </p>
+      )}
+
+      {identify.confidenceSource === 'model_self_report' && (
+        <p className="muted small">
+          Confidence is the model&apos;s own self-report, not a calibrated probability.
+        </p>
+      )}
+
       {cross != null && cross < 0.6 && (
         <Notice tone="bad" title="Low trust in this image prediction">
           This checkpoint scores <strong>{pct(cross)}</strong> on real photographs — it was trained on rendered

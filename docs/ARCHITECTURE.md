@@ -8,29 +8,39 @@ This is not a slogan — it is enforced in code at three separate layers.
 
 | Layer | Enforcement |
 |---|---|
-| Vision service | Returns a **category** and a confidence. It has no access to fitment data, so it is structurally incapable of asserting compatibility. |
+| Identification service | Returns a **category** and a confidence. It has no access to fitment data, so it is structurally incapable of asserting compatibility. This holds identically for the cloud provider and for the optional local model. |
 | Express API | Fitment verdicts come only from `fitmentService.checkFitment()`, whose inputs are a part number or a vehicle-catalogue record. A prediction below the confidence floor is downgraded to `ask_for_more_info`. |
 | Web app | Renders the verdict with its evidence attached. There is no code path that displays "fits" without a supporting evidence list. |
 
 ## Services
 
 ```
- ┌──────────────┐   same-origin    ┌──────────────────┐   HTTP    ┌────────────────────┐
- │  React app   │  /api/*  ───────▶│  Express API     │ ────────▶ │  FastAPI vision    │
- │  Vite :5173  │   (proxied)      │  Node :4000      │           │  Python :8000      │
- └──────────────┘                  └────────┬─────────┘           └────────────────────┘
-                                            │                      category + confidence
-                                            │                      (+ OOD advisory)
-                                            ▼
-                                   ┌──────────────────┐
-                                   │  Catalogue store │   JSON now → MongoDB later
-                                   │  parts/vehicles/ │
-                                   │  vendors/offers  │
-                                   └──────────────────┘
+ ┌──────────────┐  same-origin   ┌──────────────────┐   HTTP   ┌──────────────────────┐
+ │  React app   │  /api/*  ────▶ │  Express API     │ ───────▶ │  FastAPI identify    │
+ │  Vite :5173  │  (proxied)     │  Node :4000      │          │  Python :8000        │
+ └──────────────┘                └────────┬─────────┘          └──────────┬───────────┘
+                                          │                               │ engine ladder
+                                          │                               ▼
+                                          │                    ┌──────────────────────┐
+                                          │                    │ Gemini / OpenAI /    │
+                                          │                    │ Anthropic            │
+                                          │                    │ (photo · label OCR · │
+                                          │                    │  description)        │
+                                          │                    └──────────────────────┘
+                                          ▼                     or the optional local
+                                 ┌──────────────────┐           checkpoint / heuristic
+                                 │  Catalogue store │           when no key is present
+                                 │  parts/vehicles/ │
+                                 │  vendors/offers  │   JSON now → MongoDB later
+                                 └──────────────────┘
 ```
 
-Three processes, two languages. The split is not fashion: PyTorch does not belong in a
-Node process, and a model that segfaults must not take the price engine down with it.
+Three processes, two languages. The split is not fashion: a third-party HTTP client and
+a JSON parser do not belong in the catalogue API's process, and a provider that hangs or
+returns nonsense must not take the price engine down with it. The identification service
+is also the only component that ever needs an API key, so credential handling is confined
+to one small, auditable file (`app/cloud_vision.py`) that uses the standard library
+only.
 
 ## Request flow — `POST /api/fitment/analyse`
 
@@ -69,10 +79,24 @@ addressable, so a partial answer is still useful.
 documents are already in Mongo's shape, so the migration is configuration, not a
 rewrite. It also means the demo runs with zero infrastructure.
 
-**Fail loudly, never invent.** When the vision service is unreachable `/api/identify`
-returns **503** with a `fallback` object naming the deterministic route the UI should
-offer. When a part has no offers, `/api/price/compare` says so instead of estimating.
-Both are tested behaviours, not aspirations.
+**Fail loudly, never invent.** When the identification service is unreachable
+`/api/identify` returns **503** with a `fallback` object naming the deterministic route
+the UI should offer. When a part has no offers, `/api/price/compare` says so instead of
+estimating. Both are tested behaviours, not aspirations.
+
+**An engine ladder, not a dependency.** `/predict`, `/ocr` and `/describe` each try the
+configured cloud provider first, then the optional local checkpoint, then a heuristic
+whose confidence is hard-capped at 0.45 — structurally below the API's 0.55 floor, so a
+guess can never be presented as a finding. `/health` reports which rung is live, and
+`requiresTraining: false` / `requiresDataset: false` are asserted by the test suite. No
+configuration is a failure state: "no provider configured" is a state the UI renders
+honestly rather than a crash.
+
+**Provenance on every input.** A part number a user typed, a part number the model read
+off a photo, and a part number inferred from a category suggestion are three different
+strengths of evidence. The pipeline labels which one it used (`resolution.path`) and warns
+on the weaker ones, which is why a number read from a photo that matches nothing in the
+catalogue returns `needs_vehicle_info` — never `confirmed`.
 
 **Vite proxy, not CORS to localhost.** The browser calls same-origin `/api/*` and Vite
 forwards to the API. This is required for hosted preview environments (where the
@@ -95,10 +119,12 @@ is how people buy the wrong brake pad.
 
 - **No distributed transactions.** Catalogue writes are not implemented in the
   prototype; the API is read-only over the seed data.
-- **Domain gap.** The shipped model scores 0.969 in-domain and 0.258 on real
-  photographs. That is a training-data problem, not an architecture problem, and the
-  architecture is designed to stay safe while it is unsolved. Quantified in
-  `docs/DATASET-AND-MODEL.md`.
+- **Provider confidence is a self-report.** The cloud model's confidence is not a
+  calibrated probability, so responses tag it `confidenceSource: "model_self_report"` and
+  the API warns that it is a coarse hint. Only the optional local model is calibrated.
+- **Offline fallback domain gap.** The local checkpoint scores 0.969 in-domain and 0.258
+  on real photographs. It is no longer the default path; it exists so an offline demo is
+  possible. Quantified in `docs/DATASET-AND-MODEL.md`.
 - **Out-of-distribution detection is weak.** Measured at ~35% recall on real photos
   (0% for a diagonal distance). It is surfaced as an advisory and labelled as such.
 - **Vendor data is static.** No scheduler refreshes offers; `updatedAt` is honest

@@ -1,0 +1,20 @@
+# OPTIONAL — local OCR engines for the /ocr endpoint.
+#
+#   pip install -r requirements-ocr.txt
+#
+# You probably do not need this. Gemini reads labels, boxes and stamped codes far
+# better than these engines do — especially on angled, glared or embossed text, which
+# is exactly how part numbers appear in practice — and it needs no system packages.
+#
+# Install one of these only if you need OCR with no cloud provider (fully offline).
+# The /ocr endpoint tries PaddleOCR first, then EasyOCR, then Tesseract, and returns
+# a 503 explaining this if none is present.
+
+# Best accuracy on stamped and embossed part numbers. Larger download.
+# paddleocr>=2.7
+
+# Easier install, decent on printed labels.
+# easyocr>=1.7
+
+# Smallest, but also needs the system package: apt install tesseract-ocr
+# pytesseract>=0.3.10

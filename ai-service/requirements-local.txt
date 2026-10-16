@@ -1,0 +1,21 @@
+# OPTIONAL — the local fallback model, and the training pipeline that produced it.
+#
+#   pip install -r requirements-local.txt
+#
+# You do NOT need this. Identification runs on the AI provider by default and is
+# better at real photographs than this model is. Install it only if you want:
+#
+#   * an offline demo with no internet and no API key
+#   * to re-run the dataset/ablation study in docs/DATASET-AND-MODEL.md
+#
+# Be aware of what you are enabling: the committed checkpoint scores 0.969 on the
+# rendered images it was trained on and 0.258 on real photographs, and was
+# confidently wrong (>=0.80) on 48% of its errors. It is a fallback, not an answer.
+#
+# ~2 GB download.
+
+torch>=2.2
+
+# Optional, only for rebuilding the dataset from Openverse if you ever want to:
+#   python -m app.download_images --per-class 40 --out ../data/images
+# (numpy and pillow are already in requirements.txt)

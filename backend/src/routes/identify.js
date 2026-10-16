@@ -1,11 +1,47 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { AiUnavailableError, predictImage } from '../services/aiClient.js';
-import { findParts } from '../store/index.js';
+import { AiUnavailableError, aiHealth, predictImage } from '../services/aiClient.js';
+import { findPartByNumber, findParts } from '../store/index.js';
 import { categoryLabel, isSafetyCritical } from '../taxonomy.js';
 import config from '../config.js';
 
 const router = Router();
+
+/**
+ * GET /api/identify/health
+ *
+ * Which identification engine will actually serve a request, and what the UI should
+ * tell the user about it. The frontend calls this to show the provider banner — the
+ * user deserves to know whether a real vision model is answering or a fallback is.
+ */
+router.get('/health', async (_req, res) => {
+  const ai = await aiHealth();
+
+  if (!ai.reachable) {
+    return res.json({
+      engine: 'unavailable',
+      reachable: false,
+      detail: ai.error ?? 'identification service unreachable',
+      message:
+        'The identification service is offline. The part-number and vehicle paths still work — ' +
+        'only photo identification is affected.',
+      requiresTraining: false,
+      requiresDataset: false,
+      warnings: ['Identification service unreachable.'],
+    });
+  }
+
+  res.json({
+    reachable: true,
+    engine: ai.engine ?? 'unknown',
+    engines: ai.engines ?? null,
+    requiresTraining: Boolean(ai.requiresTraining),
+    requiresDataset: Boolean(ai.requiresDataset),
+    warnings: ai.warnings ?? [],
+    classes: ai.classes ?? null,
+    confidenceFloor: ai.confidenceFloor ?? null,
+  });
+});
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -67,12 +103,19 @@ router.post('/', upload.single('file'), async (req, res) => {
   const top = predictions[0] ?? null;
   const uncertain = !top || top.confidence < minConfidence;
 
-  // Domain-shift advisory from the vision service. NOTE: measured detection rate on
-  // real photos is only ~35%, so a silent (low) result is NOT a clean bill of health.
-  // See ai-service/app/ood.py.
+  // Domain-shift advisory from the local model. Absent on the cloud path, because a
+  // frontier model has no meaningful "training distribution" to compare against.
   const ood = raw.outOfDistribution ?? null;
-  const domainShift = Boolean(raw.validity?.measuredCrossDomainAccuracy != null
-    && raw.validity.measuredCrossDomainAccuracy < 0.6);
+
+  // The most valuable thing a photo can give us: a part number printed ON the part.
+  // It converts an image guess into an exact catalogue lookup, which is the only
+  // route to a `confirmed` fitment verdict.
+  const visiblePartNumber = raw.visiblePartNumber ?? null;
+  const visibleBrand = raw.visibleBrand ?? null;
+  let detectedPart = null;
+  if (visiblePartNumber) {
+    detectedPart = findPartByNumber(visiblePartNumber);
+  }
 
   const warnings = [];
   if (uncertain) {
@@ -84,13 +127,38 @@ router.post('/', upload.single('file'), async (req, res) => {
   if (ood && ood.level !== 'low') {
     warnings.push({ code: 'out_of_distribution', message: ood.note, severity: ood.level });
   }
-  if (domainShift) {
+  if (raw.backend === 'heuristic') {
     warnings.push({
-      code: 'model_domain_gap',
+      code: 'degraded_engine',
       message:
-        `This checkpoint scores ${(raw.validity.measuredCrossDomainAccuracy * 100).toFixed(1)}% on real photographs ` +
-        '(it was trained on rendered images). Treat the category as a hint, not an identification.',
+        'No cloud provider and no local model are available, so a rule-based guess answered. ' +
+        'It cannot pass the confidence threshold — configure the AI provider or use a part number.',
       severity: 'high',
+    });
+  }
+  if (raw.fallbackReason) {
+    warnings.push({
+      code: 'provider_fallback',
+      message: `The AI provider could not be reached (${raw.fallbackReason}), so a local fallback answered.`,
+      severity: 'high',
+    });
+  }
+  if (visiblePartNumber && !detectedPart) {
+    warnings.push({
+      code: 'read_part_number_not_in_catalogue',
+      message:
+        `The photo appears to show part number "${visiblePartNumber}", which is not in the catalogue. ` +
+        'Check it against the printed label — 0/O, 1/I and 8/B are commonly mis-read.',
+      severity: 'medium',
+    });
+  }
+  if (visiblePartNumber && detectedPart) {
+    warnings.push({
+      code: 'part_number_read_from_photo',
+      message:
+        `Part number "${visiblePartNumber}" was read from the photo and matched catalogue record ` +
+        `${detectedPart.partNumber}. Confirm it against the label before ordering.`,
+      severity: 'info',
     });
   }
 
@@ -98,9 +166,26 @@ router.post('/', upload.single('file'), async (req, res) => {
     modelVersion: raw.modelVersion ?? 'unknown',
     backend: raw.backend ?? null,
     latencyMs: raw.latencyMs ?? null,
+    confidenceSource: raw.confidenceSource ?? null,
     warnings,
     validity: raw.validity ?? null,
     outOfDistribution: ood,
+    reasoning: raw.reasoning ?? null,
+    // Part number and brand read off the part itself, plus the catalogue match if any.
+    detected: {
+      partNumber: visiblePartNumber,
+      brand: visibleBrand,
+      catalogueMatch: detectedPart
+        ? {
+            id: detectedPart.id,
+            name: detectedPart.name,
+            brand: detectedPart.brand,
+            partNumber: detectedPart.partNumber,
+            category: detectedPart.category,
+            condition: detectedPart.condition,
+          }
+        : null,
+    },
     image: { filename: req.file.originalname, bytes: req.file.size, mimetype: req.file.mimetype },
     predictions,
     top1: top,
@@ -110,7 +195,9 @@ router.post('/', upload.single('file'), async (req, res) => {
     message: uncertain
       ? 'Not confident enough to name the part. Please add the part number or your vehicle details.'
       : `Best guess: ${top.categoryLabel}. Category only — fitment is not yet confirmed.`,
-    nextSteps: ['Confirm fitment with vehicle details or a part number', 'Compare prices from verified sellers'],
+    nextSteps: detectedPart
+      ? [`Confirm fitment for ${detectedPart.partNumber} with your vehicle details`, 'Compare prices from verified sellers']
+      : ['Confirm fitment with vehicle details or a part number', 'Compare prices from verified sellers'],
   });
 });
 

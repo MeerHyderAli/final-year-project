@@ -9,6 +9,7 @@ import { all } from './store/index.js';
 import catalogRoutes from './routes/catalog.js';
 import identifyRoutes from './routes/identify.js';
 import ocrRoutes from './routes/ocr.js';
+import describeRoutes from './routes/describe.js';
 import fitmentRoutes from './routes/fitment.js';
 import priceRoutes from './routes/price.js';
 import nearbyRoutes from './routes/nearby.js';
@@ -55,6 +56,7 @@ export async function createApp() {
         { method: 'GET', path: '/api/catalog/parts/:id', purpose: 'Part detail + fitments' },
         { method: 'POST', path: '/api/identify', purpose: 'Image -> category prediction + catalogue candidates' },
         { method: 'POST', path: '/api/ocr', purpose: 'Label photo or raw text -> part-number candidates -> catalogue match' },
+        { method: 'POST', path: '/api/describe', purpose: 'Text description -> category (no photograph needed)' },
         { method: 'POST', path: '/api/fitment/analyse', purpose: 'Full pipeline: identify + fitment + price + nearby' },
         { method: 'GET', path: '/api/price/policy', purpose: 'Transparency rules for pricing' },
         { method: 'GET', path: '/api/price/compare?partId=', purpose: 'Vendor quotes, stats, same-category alternatives' },
@@ -66,6 +68,7 @@ export async function createApp() {
   app.use('/api/catalog', catalogRoutes);
   app.use('/api/identify', identifyRoutes);
   app.use('/api/ocr', ocrRoutes);
+  app.use('/api/describe', describeRoutes);
   app.use('/api/fitment', fitmentRoutes);
   app.use('/api/price', priceRoutes);
   app.use('/api/nearby', nearbyRoutes);

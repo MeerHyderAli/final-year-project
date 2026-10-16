@@ -1,4 +1,4 @@
-import type { AnalysisResponse, IdentifyResponse, Vehicle, PriceBlock } from './types';
+import type { AiHealth, AnalysisResponse, DescribeResponse, IdentifyResponse, Vehicle, PriceBlock } from './types';
 
 /**
  * All requests are same-origin. Vite proxies /api to the Express server, which keeps
@@ -36,6 +36,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<Record<string, unknown>>('/health'),
+
+  aiHealth: () => request<AiHealth>('/identify/health'),
+
+  describe: (description: string) =>
+    request<DescribeResponse>('/describe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description }),
+    }),
 
   vehicles: () => request<{ count: number; makes: string[]; results: Vehicle[] }>('/catalog/vehicles'),
 
