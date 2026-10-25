@@ -15,7 +15,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-PY="${PYTHON:-python3}"
+source "$ROOT/scripts/_python.sh"
 LOGDIR="$ROOT/.logs"
 mkdir -p "$LOGDIR"
 
@@ -32,7 +32,7 @@ cleanup() {
 trap cleanup INT TERM
 
 port_busy() {
-  "$PY" - "$1" <<'PY' 2>/dev/null
+  "$PY" "${PY_ARGS[@]}" - "$1" <<'PY' 2>/dev/null
 import socket, sys
 s = socket.socket(); s.settimeout(0.4)
 sys.exit(0 if s.connect_ex(("127.0.0.1", int(sys.argv[1]))) == 0 else 1)
@@ -54,13 +54,13 @@ if [[ "${1:-}" == "--setup" ]]; then
   echo "==> installing dependencies"
   ( cd backend  && npm install --no-audit --no-fund )
   ( cd frontend && npm install --no-audit --no-fund )
-  "$PY" -c "import fastapi, uvicorn, numpy, PIL" 2>/dev/null || \
-    "$PY" -m pip install -r ai-service/requirements.txt
+  "$PY" "${PY_ARGS[@]}" -c "import fastapi, uvicorn, numpy, PIL" 2>/dev/null || \
+    "$PY" "${PY_ARGS[@]}" -m pip install -r ai-service/requirements.txt
 fi
 
 # ---------------------------------------------------------------- preflight
 echo "==> preflight"
-if ! "$PY" -c "import fastapi, uvicorn, numpy, PIL" 2>/dev/null; then
+if ! "$PY" "${PY_ARGS[@]}" -c "import fastapi, uvicorn, numpy, PIL" 2>/dev/null; then
   echo "    !! python deps missing. Run:  bash scripts/dev.sh --setup" >&2
   exit 1
 fi
@@ -92,7 +92,7 @@ else
   echo "                            vehicle-fitment paths still work exactly."
   echo "                            To enable: export VISION_API_KEY=your-key"
 fi
-if ! "$PY" -c "import torch" 2>/dev/null; then
+if ! "$PY" "${PY_ARGS[@]}" -c "import torch" 2>/dev/null; then
   echo "    note: torch not installed — fine, it is only needed for the"
   echo "          optional local fallback model."
 fi
@@ -109,7 +109,7 @@ start_service() { # <port> <label> <logname> <workdir> <command...>
   PIDS+=($!)
 }
 
-start_service 8000 "identification service" identify ai-service "$PY" -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+start_service 8000 "identification service" identify ai-service "$PY" "${PY_ARGS[@]}" -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 start_service 4000 "API"                    api      backend    node src/server.js
 start_service 5173 "web app"                web      frontend   npm run dev
 

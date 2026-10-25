@@ -10,6 +10,8 @@
 # Exit code: 0 when every check passes, 1 otherwise.
 set -u
 cd "$(dirname "$0")/.."
+ROOT="$(pwd)"
+source "$ROOT/scripts/_python.sh"
 
 PASS=0; FAIL=0
 chk() { # name, expected, actual
@@ -20,13 +22,13 @@ A=localhost:4000/api
 V=localhost:8000
 
 echo "--- health & catalogue ---"
-chk "health ok" "ok" "$(curl -s $A/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["status"])')"
-chk "ai reachable" "True" "$(curl -s $A/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["aiService"]["ok"])')"
-chk "18 parts" "18" "$(curl -s $A/catalog/parts | python3 -c 'import json,sys;print(json.load(sys.stdin)["count"])')"
-chk "part lookup by number" "part-oil-filter-swift-01" "$(curl -s "$A/catalog/parts/lookup?partNumber=16510-61a31" | python3 -c 'import json,sys;print(json.load(sys.stdin)["part"]["id"])')"
+chk "health ok" "ok" "$(curl -s $A/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["status"])')"
+chk "ai reachable" "True" "$(curl -s $A/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["aiService"]["ok"])')"
+chk "18 parts" "18" "$(curl -s $A/catalog/parts | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["count"])')"
+chk "part lookup by number" "part-oil-filter-swift-01" "$(curl -s "$A/catalog/parts/lookup?partNumber=16510-61a31" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["part"]["id"])')"
 
 echo "--- fitment verdicts ---"
-fv() { curl -s -X POST $A/fitment/analyse -H 'Content-Type: application/json' -d "$1" | python3 -c 'import json,sys;print(json.load(sys.stdin)["stage2_fitment"]["verdict"])'; }
+fv() { curl -s -X POST $A/fitment/analyse -H 'Content-Type: application/json' -d "$1" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["stage2_fitment"]["verdict"])'; }
 chk "part# + right vehicle -> confirmed"      "confirmed"           "$(fv '{"partNumber":"16510-61A31","vehicleId":"veh-maruti-swift-2018-k12m"}')"
 chk "brake pad safety-critical"               "needs_part_number"   "$(fv '{"partId":"part-brake-pad-swift-08","vehicleId":"veh-maruti-swift-2018-k12m"}')"
 chk "wrong vehicle -> incompatible"           "incompatible"        "$(fv '{"partId":"part-oil-filter-swift-01","vehicleId":"veh-jcb-3dx-2012"}')"
@@ -46,35 +48,35 @@ chk "a bare category is never fitment" "needs_vehicle_info" \
 
 echo "--- price engine honesty ---"
 curl -s "$A/price/compare?partId=part-brake-pad-nexon-09" > /tmp/px.json
-chk "out-of-stock flagged" "out_of_stock" "$(python3 -c 'import json;print([q["stockStatus"] for q in json.load(open("/tmp/px.json"))["quote"]["quotes"] if q["stockStatus"]=="out_of_stock"][0])')"
-chk "spread computed"      "True"         "$(python3 -c 'import json;d=json.load(open("/tmp/px.json"))["quote"];print(d["stats"]["spreadPct"] is not None)')"
-chk "disclaimer present"   "True"         "$(python3 -c 'import json;print(len(json.load(open("/tmp/px.json"))["quote"]["disclaimer"])>50)')"
-chk "no-offer part has no quotes" "0"    "$(curl -s "$A/price/compare?partId=part-hydraulic-hose-jcb-17" | python3 -c 'import json,sys;print(json.load(sys.stdin)["quote"]["stats"]["count"])')"
-chk "no-offer part refuses to estimate" "none" "$(curl -s "$A/price/compare?partId=part-hydraulic-hose-jcb-17" | python3 -c 'import json,sys;print(json.load(sys.stdin)["quote"]["dataQuality"]["level"])')"
-chk "no-offer part has no cheapest" "None" "$(curl -s "$A/price/compare?partId=part-hydraulic-hose-jcb-17" | python3 -c 'import json,sys;print(json.load(sys.stdin)["quote"]["cheapest"])')"
-chk "brake shoe (safety-critical, no offer) still 404-free" "needs_part_number" "$(curl -s -X POST $A/fitment/analyse -H 'Content-Type: application/json' -d '{"partId":"part-brake-shoe-jd-18","vehicleId":"veh-john-deere-5050d-2010"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["stage2_fitment"]["verdict"])')"
+chk "out-of-stock flagged" "out_of_stock" "$("$PY" "${PY_ARGS[@]}" -c 'import json;print([q["stockStatus"] for q in json.load(open("/tmp/px.json"))["quote"]["quotes"] if q["stockStatus"]=="out_of_stock"][0])')"
+chk "spread computed"      "True"         "$("$PY" "${PY_ARGS[@]}" -c 'import json;d=json.load(open("/tmp/px.json"))["quote"];print(d["stats"]["spreadPct"] is not None)')"
+chk "disclaimer present"   "True"         "$("$PY" "${PY_ARGS[@]}" -c 'import json;print(len(json.load(open("/tmp/px.json"))["quote"]["disclaimer"])>50)')"
+chk "no-offer part has no quotes" "0"    "$(curl -s "$A/price/compare?partId=part-hydraulic-hose-jcb-17" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["quote"]["stats"]["count"])')"
+chk "no-offer part refuses to estimate" "none" "$(curl -s "$A/price/compare?partId=part-hydraulic-hose-jcb-17" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["quote"]["dataQuality"]["level"])')"
+chk "no-offer part has no cheapest" "None" "$(curl -s "$A/price/compare?partId=part-hydraulic-hose-jcb-17" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["quote"]["cheapest"])')"
+chk "brake shoe (safety-critical, no offer) still 404-free" "needs_part_number" "$(curl -s -X POST $A/fitment/analyse -H 'Content-Type: application/json' -d '{"partId":"part-brake-shoe-jd-18","vehicleId":"veh-john-deere-5050d-2010"}' | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["stage2_fitment"]["verdict"])')"
 
 echo "--- nearby ranking ---"
 curl -s "$A/nearby?lat=12.9716&lng=77.5946&partId=part-oil-filter-swift-01" > /tmp/nb.json
-chk "caveat present" "True" "$(python3 -c 'import json;print(len(json.load(open("/tmp/nb.json"))["caveat"])>40)')"
-chk "ranked ascending" "True" "$(python3 -c '
+chk "caveat present" "True" "$("$PY" "${PY_ARGS[@]}" -c 'import json;print(len(json.load(open("/tmp/nb.json"))["caveat"])>40)')"
+chk "ranked ascending" "True" "$("$PY" "${PY_ARGS[@]}" -c '
 import json; r=json.load(open("/tmp/nb.json"))["results"]; s=[x["score"] for x in r]; print(s==sorted(s))')"
-chk "availability claims carry evidence" "True" "$(python3 -c '
+chk "availability claims carry evidence" "True" "$("$PY" "${PY_ARGS[@]}" -c '
 import json; r=json.load(open("/tmp/nb.json"))["results"]; print(all(x["availability"]["evidence"] for x in r))')"
 
 echo "--- OCR path ---"
-chk "ocr finds code in text" "True" "$(curl -s -X POST $A/ocr -F "rawText=Some label MG PARTS 16510-61A31 lot 22" | python3 -c '
+chk "ocr finds code in text" "True" "$(curl -s -X POST $A/ocr -F "rawText=Some label MG PARTS 16510-61A31 lot 22" | "$PY" "${PY_ARGS[@]}" -c '
 import json,sys; d=json.load(sys.stdin); print(d["decision"]=="exact_catalogue_match")')"
 
 echo "--- identification service: no training, no dataset ---"
-chk "service healthy" "ok" "$(curl -s $V/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["status"])')"
-chk "no model training required" "False" "$(curl -s $V/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["requiresTraining"])')"
-chk "no image dataset required"  "False" "$(curl -s $V/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["requiresDataset"])')"
-chk "an engine identifies itself" "True" "$(curl -s $V/health | python3 -c 'import json,sys;print(len(json.load(sys.stdin)["engine"])>0)')"
-chk "only suggests, never asserts fitment" "True" "$(curl -s $V/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["categoryOnly"])')"
-chk "API proxies the engine state" "True" "$(curl -s $A/identify/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["reachable"])')"
+chk "service healthy" "ok" "$(curl -s $V/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["status"])')"
+chk "no model training required" "False" "$(curl -s $V/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["requiresTraining"])')"
+chk "no image dataset required"  "False" "$(curl -s $V/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["requiresDataset"])')"
+chk "an engine identifies itself" "True" "$(curl -s $V/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(len(json.load(sys.stdin)["engine"])>0)')"
+chk "only suggests, never asserts fitment" "True" "$(curl -s $V/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["categoryOnly"])')"
+chk "API proxies the engine state" "True" "$(curl -s $A/identify/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["reachable"])')"
 
-ENGINE="$(curl -s $V/health | python3 -c 'import json,sys;print(json.load(sys.stdin)["engine"])')"
+ENGINE="$(curl -s $V/health | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["engine"])')"
 
 # A sample image is needed for the /predict checks. Real photographs and generated
 # datasets both live in git-ignored directories, so on a fresh clone neither exists —
@@ -84,7 +86,7 @@ for candidate in ai-service/eval/real-photos/*.jpg data/images/*.jpg; do
   [ -f "$candidate" ] && IMG="$candidate" && break
 done
 if [ -z "$IMG" ]; then
-  IMG="$(python3 - <<'PY' 2>/dev/null || true
+  IMG="$("$PY" "${PY_ARGS[@]}" - <<'PY' 2>/dev/null || true
 from PIL import Image
 import os, tempfile
 path = os.path.join(tempfile.gettempdir(), "autoparts-verify-sample.png")
@@ -102,19 +104,19 @@ elif [ -z "$IMG" ]; then
 else
   echo "  note: engine = $ENGINE"
   PRED_OUT="$(curl -s -m 60 -X POST $V/predict -F "file=@$IMG")"
-  chk "predict returns ranked predictions" "True" "$(printf '%s' "$PRED_OUT" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(len(d["predictions"])>=1)')"
-  chk "category-only flag" "True" "$(printf '%s' "$PRED_OUT" | python3 -c 'import json,sys;print(json.load(sys.stdin)["categoryOnly"])')"
-  chk "confidence floor reported" "0.55" "$(printf '%s' "$PRED_OUT" | python3 -c 'import json,sys;print(json.load(sys.stdin)["confidenceFloor"])')"
-  chk "prediction is in the taxonomy" "True" "$(printf '%s' "$PRED_OUT" | python3 -c 'import json,sys;print(json.load(sys.stdin)["predictions"][0]["category"] in ["oil_filter","air_filter","fuel_filter","brake_pad","belt","spark_plug","clutch_plate","hydraulic_filter"])')"
-  chk "confidence source declared" "True" "$(printf '%s' "$PRED_OUT" | python3 -c 'import json,sys;print(len(json.load(sys.stdin).get("confidenceSource") or "")>0)')"
+  chk "predict returns ranked predictions" "True" "$(printf '%s' "$PRED_OUT" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;d=json.load(sys.stdin);print(len(d["predictions"])>=1)')"
+  chk "category-only flag" "True" "$(printf '%s' "$PRED_OUT" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["categoryOnly"])')"
+  chk "confidence floor reported" "0.55" "$(printf '%s' "$PRED_OUT" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["confidenceFloor"])')"
+  chk "prediction is in the taxonomy" "True" "$(printf '%s' "$PRED_OUT" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin)["predictions"][0]["category"] in ["oil_filter","air_filter","fuel_filter","brake_pad","belt","spark_plug","clutch_plate","hydraulic_filter"])')"
+  chk "confidence source declared" "True" "$(printf '%s' "$PRED_OUT" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(len(json.load(sys.stdin).get("confidenceSource") or "")>0)')"
 fi
 chk "rejects non-image" "415" "$(curl -s -o /dev/null -w '%{http_code}' -X POST $V/predict -F "file=@README.md")"
 
 echo "--- describe path (no photo needed) ---"
 DESC_OUT="$(curl -s -m 60 -X POST $A/describe -H 'Content-Type: application/json' -d '{"description":"round metal canister that screws onto the engine block"}')"
-chk "describe answers" "True" "$(printf '%s' "$DESC_OUT" | python3 -c 'import json,sys;print(len(json.load(sys.stdin).get("decision") or "")>0)')"
-chk "describe is flagged weaker than a photo" "weaker_than_photo" "$(printf '%s' "$DESC_OUT" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("evidenceStrength",""))')"
-chk "describe carries no fitment claim" "True" "$(printf '%s' "$DESC_OUT" | python3 -c '
+chk "describe answers" "True" "$(printf '%s' "$DESC_OUT" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(len(json.load(sys.stdin).get("decision") or "")>0)')"
+chk "describe is flagged weaker than a photo" "weaker_than_photo" "$(printf '%s' "$DESC_OUT" | "$PY" "${PY_ARGS[@]}" -c 'import json,sys;print(json.load(sys.stdin).get("evidenceStrength",""))')"
+chk "describe carries no fitment claim" "True" "$(printf '%s' "$DESC_OUT" | "$PY" "${PY_ARGS[@]}" -c '
 import json,sys; d=json.load(sys.stdin); print("fits" not in json.dumps(d).lower() or d.get("requiresHumanCheck") is not False)')"
 
 echo

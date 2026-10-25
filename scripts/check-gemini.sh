@@ -13,7 +13,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-PY="${PYTHON:-python3}"
+source "$ROOT/scripts/_python.sh"
 PROVIDER="${VISION_PROVIDER:-gemini}"
 export VISION_PROVIDER="$PROVIDER"
 
@@ -31,6 +31,7 @@ echo " AI provider check"
 echo "════════════════════════════════════════════════════════"
 echo "  provider : $PROVIDER"
 echo "  model    : ${VISION_MODEL:-(default for provider)}"
+echo "  python   : $PY ${PY_ARGS[*]}"
 echo
 
 if [ -z "${VISION_API_KEY:-}" ]; then
@@ -57,7 +58,7 @@ echo
 
 export VISION_API_KEY
 
-"$PY" - <<'PY'
+"$PY" "${PY_ARGS[@]}" - <<'PY'
 import sys
 from pathlib import Path
 

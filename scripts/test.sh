@@ -16,11 +16,11 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-PY="${PYTHON:-python3}"
+source "$ROOT/scripts/_python.sh"
 FAILED=0
 
 port_busy() {
-  "$PY" - "$1" <<'PY' 2>/dev/null
+  "$PY" "${PY_ARGS[@]}" - "$1" <<'PY' 2>/dev/null
 import socket, sys
 s = socket.socket(); s.settimeout(0.4)
 sys.exit(0 if s.connect_ex(("127.0.0.1", int(sys.argv[1]))) == 0 else 1)
@@ -30,7 +30,7 @@ PY
 echo "════════════════════════════════════════════════════════"
 echo " 1. Identification provider (unit)"
 echo "════════════════════════════════════════════════════════"
-if "$PY" ai-service/tests/test_cloud_vision.py; then
+if "$PY" "${PY_ARGS[@]}" ai-service/tests/test_cloud_vision.py; then
   echo "  -> suite passed"
 else
   echo "  -> suite FAILED"; FAILED=1
@@ -40,7 +40,7 @@ echo
 echo "════════════════════════════════════════════════════════"
 echo " 2. Gemini wire format (integration, local mock)"
 echo "════════════════════════════════════════════════════════"
-if "$PY" ai-service/tests/test_gemini_integration.py; then
+if "$PY" "${PY_ARGS[@]}" ai-service/tests/test_gemini_integration.py; then
   echo "  -> suite passed"
 else
   echo "  -> suite FAILED"; FAILED=1

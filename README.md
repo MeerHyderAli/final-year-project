@@ -122,6 +122,12 @@ bash scripts/dev.sh              # identification :8000 · API :4000 · web app 
 Open <http://localhost:5173>. `scripts/dev.sh` prints which engine will answer, waits
 until all three services are up, and logs to `.logs/`.
 
+**Windows / Git Bash:** the scripts auto-detect `python3`, `python`, and the `py`
+launcher. If your installation is not on `PATH`, use `PYTHON=python bash scripts/dev.sh`
+(or set `PYTHON` to the interpreter's full path). The same override works with
+`scripts/check-gemini.sh` and `scripts/test.sh`. You do not need to install a second
+copy of Python just because Windows does not provide a `python3` command.
+
 Running the services by hand instead:
 
 ```bash
