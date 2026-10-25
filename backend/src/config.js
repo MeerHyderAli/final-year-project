@@ -8,13 +8,29 @@ export const DATA_DIR = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
   : path.resolve(__dirname, '..', '..', 'data');
 
+function positiveEnvNumber(name, fallback) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+// The Node client must not give up before the Python provider client. Mirror the
+// latter's worst-case budget: each attempt gets VISION_TIMEOUT seconds, with the
+// same exponential backoff used by cloud_vision.py, plus a small HTTP margin.
+// AI_TIMEOUT_MS remains an explicit override for deployments that need a hard cap.
+const visionTimeoutSeconds = positiveEnvNumber('VISION_TIMEOUT', 30);
+const visionAttempts = Math.max(1, Math.floor(positiveEnvNumber('VISION_RETRIES', 2)));
+const retryBackoffSeconds = 1.5 * (2 ** (visionAttempts - 1) - 1);
+const providerBudgetMs = Math.ceil(
+  (visionTimeoutSeconds * visionAttempts + retryBackoffSeconds + 5) * 1000,
+);
+
 export const config = {
   port: Number(process.env.PORT || 4000),
   host: process.env.HOST || '0.0.0.0',
 
   /** Python FastAPI vision service. See ai-service/README.md */
   aiServiceUrl: process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000',
-  aiTimeoutMs: Number(process.env.AI_TIMEOUT_MS || 20000),
+  aiTimeoutMs: positiveEnvNumber('AI_TIMEOUT_MS', providerBudgetMs),
 
   /**
    * Optional MongoDB. When MONGODB_URI is unset the API runs fully offline on the

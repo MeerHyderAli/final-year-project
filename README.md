@@ -259,7 +259,7 @@ bash scripts/test.sh                              # both suites
 | `VISION_API_KEY` | *(unset)* | Provider key; provider-native names also work |
 | `VISION_MODEL` | provider default | Model id override |
 | `MONGODB_URI` | *(unset)* | Set to mirror the catalogue into MongoDB |
-| `AI_TIMEOUT_MS` | `20000` | Identification service timeout |
+| `AI_TIMEOUT_MS` | derived | Node → AI request cap; defaults to the provider timeout/retry budget |
 | `UPLOAD_MAX_BYTES` | `8388608` | Upload limit (8 MB) |
 
 Every setting is documented in [`.env.example`](.env.example).

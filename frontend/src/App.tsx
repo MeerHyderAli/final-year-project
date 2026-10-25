@@ -133,8 +133,8 @@ export default function App() {
         }
       } catch (err) {
         setError(
-          err instanceof ApiError && err.status === 503
-            ? 'The vision service is offline. Use the part-number box instead — that path is deterministic.'
+          err instanceof ApiError && (err.status === 503 || err.status === 504)
+            ? `${err.message} You can still use the part-number box or vehicle details.`
             : err instanceof ApiError
               ? err.message
               : 'Image analysis failed.',

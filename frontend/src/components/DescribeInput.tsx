@@ -34,8 +34,8 @@ export function DescribeInput({
     } catch (err) {
       setError(
         err instanceof ApiError
-          ? err.status === 503
-            ? 'The description path needs an AI provider. Configure VISION_PROVIDER and VISION_API_KEY, or use the part-number box.'
+          ? err.status === 503 || err.status === 504
+            ? `${err.message} You can still use the part-number box or vehicle details.`
             : err.message
           : 'Could not reach the API.',
       );
