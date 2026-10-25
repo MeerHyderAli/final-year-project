@@ -93,6 +93,13 @@ except (cloud_vision.CloudVisionError, TimeoutError, OSError) as exc:
     print("     - the Generative Language API is not enabled for the project")
     print("     - this network blocks generativelanguage.googleapis.com")
     sys.exit(1)
+except Exception as exc:
+    # This is a user-facing diagnostic, not a debugger. Even an unusual
+    # interpreter/network exception should produce a useful result, not a stack
+    # trace that hides the actual next step.
+    print(f"   FAIL  {type(exc).__name__}: {exc}")
+    print("   The provider check could not complete. Check the network and try again.")
+    sys.exit(1)
 
 print()
 print("2. Making one real identification call…")
@@ -121,6 +128,10 @@ except (cloud_vision.CloudVisionError, TimeoutError, OSError) as exc:
         print("   The API accepted the model-list request, but generation did not answer in time.")
         print("   Try a longer timeout and the flash model, for example:")
         print("     VISION_MODEL=gemini-2.5-flash VISION_TIMEOUT=60 bash scripts/check-gemini.sh")
+    ok = False
+except Exception as exc:
+    print(f"   FAIL  {type(exc).__name__}: {exc}")
+    print("   The provider check could not complete; no identification result was accepted.")
     ok = False
 
 print()
