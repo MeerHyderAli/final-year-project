@@ -4,6 +4,7 @@ import { quoteForPart } from '../services/priceService.js';
 import { nearbyVendors } from '../services/nearbyService.js';
 import { byId, findPartByNumber } from '../store/index.js';
 import { categoryLabel, isSafetyCritical } from '../taxonomy.js';
+import { isObviousPartName, partNameInputMessage, partNumberOrNull } from '../services/partNumber.js';
 
 const router = Router();
 
@@ -18,11 +19,25 @@ router.post('/analyse', (req, res) => {
     partNumber,
     category,
     prediction,          // raw output of POST /predict on the AI service
-    visiblePartNumber,   // part number the vision model read OFF the part
+    visiblePartNumber: rawVisiblePartNumber, // text the vision model read OFF the part
     vehicleId, make, model, year, engine,
     lat, lng, radiusKm = 15,
     condition,
   } = req.body || {};
+
+  if (isObviousPartName(partNumber)) {
+    return res.status(400).json({
+      error: 'part_name_not_part_number',
+      detail: partNameInputMessage(partNumber),
+    });
+  }
+
+  // A model can mistake a part name for an identifier. Do not let that text
+  // become an exact-match attempt or an "unknown part number" verdict.
+  const visiblePartNumber = partNumberOrNull(rawVisiblePartNumber);
+  const rejectedVisiblePartName = isObviousPartName(rawVisiblePartNumber)
+    ? String(rawVisiblePartNumber).trim()
+    : null;
 
   const aiUsed = Boolean(prediction?.predictions?.length);
   const top = aiUsed ? prediction.predictions[0] : null;
@@ -90,6 +105,15 @@ router.post('/analyse', (req, res) => {
   const categorySafety = isSafetyCritical(effectiveCategory);
 
   const warnings = [];
+  if (rejectedVisiblePartName) {
+    warnings.push({
+      code: 'part_name_not_part_number',
+      message:
+        `The vision model returned "${rejectedVisiblePartName}" as text, but that is a part name, ` +
+        'not a stamped part number. No exact part-number lookup was made; confirm the code physically.',
+      severity: 'medium',
+    });
+  }
   if (aiUncertain) {
     warnings.push({
       code: 'low_confidence',

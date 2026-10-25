@@ -8,7 +8,8 @@
 # Suites:
 #   1. ai-service/tests/test_cloud_vision.py        provider parsing/keys/failures, no network
 #   2. ai-service/tests/test_gemini_integration.py  the real Gemini wire format, via a mock
-#   3. scripts/verify.sh                            needs the API :4000 and identify :8000
+#   3. backend/tests/partNumber.test.js              manual/AI identifier input guards
+#   4. scripts/verify.sh                            needs the API :4000 and identify :8000
 #
 # Start the services first with `bash scripts/dev.sh` if the last suite should run.
 set -uo pipefail
@@ -48,7 +49,17 @@ fi
 
 echo
 echo "════════════════════════════════════════════════════════"
-echo " 3. Acceptance checks (integration)"
+echo " 3. Backend identifier input guards"
+echo "════════════════════════════════════════════════════════"
+if (cd backend && npm test); then
+  echo "  -> suite passed"
+else
+  echo "  -> suite FAILED"; FAILED=1
+fi
+
+echo
+echo "════════════════════════════════════════════════════════"
+echo " 4. Acceptance checks (integration)"
 echo "════════════════════════════════════════════════════════"
 if [[ "${1:-}" == "--offline" ]]; then
   echo "  skipped (--offline)"
@@ -61,7 +72,7 @@ elif port_busy 4000 && port_busy 8000; then
 else
   echo "  SKIPPED — services not running on :4000 and :8000."
   echo "  Start them with:  bash scripts/dev.sh"
-  echo "  (suites 1 and 2 ran without them)"
+  echo "  (suites 1–3 ran without them)"
 fi
 
 echo

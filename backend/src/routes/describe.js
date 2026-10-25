@@ -4,6 +4,7 @@ import { describePart, aiHealth } from '../services/aiClient.js';
 import { findPartByNumber, findParts } from '../store/index.js';
 import { categoryLabel, isSafetyCritical } from '../taxonomy.js';
 import config from '../config.js';
+import { partNumberOrNull } from '../services/partNumber.js';
 
 const router = Router();
 
@@ -66,7 +67,7 @@ router.post('/', async (req, res) => {
   const top = predictions[0] ?? null;
   const uncertain = !top || top.confidence < minConfidence;
 
-  const visiblePartNumber = raw.visiblePartNumber ?? null;
+  const visiblePartNumber = partNumberOrNull(raw.visiblePartNumber);
   const matched = visiblePartNumber ? findPartByNumber(visiblePartNumber) : null;
 
   res.json({

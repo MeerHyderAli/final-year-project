@@ -4,6 +4,7 @@ import { AiUnavailableError, aiHealth, predictImage } from '../services/aiClient
 import { findPartByNumber, findParts } from '../store/index.js';
 import { categoryLabel, isSafetyCritical } from '../taxonomy.js';
 import config from '../config.js';
+import { isObviousPartName, partNumberOrNull } from '../services/partNumber.js';
 
 const router = Router();
 
@@ -110,7 +111,11 @@ router.post('/', upload.single('file'), async (req, res) => {
   // The most valuable thing a photo can give us: a part number printed ON the part.
   // It converts an image guess into an exact catalogue lookup, which is the only
   // route to a `confirmed` fitment verdict.
-  const visiblePartNumber = raw.visiblePartNumber ?? null;
+  const rawVisiblePartNumber = raw.visiblePartNumber ?? null;
+  const visiblePartNumber = partNumberOrNull(rawVisiblePartNumber);
+  const rejectedVisiblePartName = isObviousPartName(rawVisiblePartNumber)
+    ? String(rawVisiblePartNumber).trim()
+    : null;
   const visibleBrand = raw.visibleBrand ?? null;
   let detectedPart = null;
   if (visiblePartNumber) {
@@ -141,6 +146,15 @@ router.post('/', upload.single('file'), async (req, res) => {
       code: 'provider_fallback',
       message: `The AI provider could not be reached (${raw.fallbackReason}), so a local fallback answered.`,
       severity: 'high',
+    });
+  }
+  if (rejectedVisiblePartName) {
+    warnings.push({
+      code: 'part_name_not_part_number',
+      message:
+        `The model returned "${rejectedVisiblePartName}" as text, but that is a part name, not a stamped part number. ` +
+        'No exact part-number lookup was made. Confirm the printed code physically.',
+      severity: 'medium',
     });
   }
   if (visiblePartNumber && !detectedPart) {

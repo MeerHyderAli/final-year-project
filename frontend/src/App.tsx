@@ -160,6 +160,14 @@ export default function App() {
         await runAnalyse({ partId: lookup.part.id, partNumber: value });
       } catch (err) {
         setPartId(null);
+        if (err instanceof ApiError && err.status === 400) {
+          // A descriptive name is not an exact identifier. Keep the user on the
+          // photo/description path instead of running a misleading fitment check.
+          setPartNumber(null);
+          setAnalysis(null);
+          setError(err.message);
+          return;
+        }
         await runAnalyse({ partId: null, partNumber: value });
         if (err instanceof ApiError && err.status === 404) {
           setError(`"${value}" was not found in the catalogue. Fitment below reports it as an unknown part number.`);

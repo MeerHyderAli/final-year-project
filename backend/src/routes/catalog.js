@@ -10,6 +10,7 @@ import {
   vehiclesForPart,
 } from '../store/index.js';
 import { CATEGORIES, VEHICLE_CLASSES } from '../taxonomy.js';
+import { isObviousPartName, partNameInputMessage } from '../services/partNumber.js';
 
 const router = Router();
 
@@ -72,6 +73,13 @@ router.get('/parts', (req, res) => {
 router.get('/parts/lookup', (req, res) => {
   const { partNumber } = req.query;
   if (!partNumber) return res.status(400).json({ error: 'partNumber_query_required' });
+  if (isObviousPartName(partNumber)) {
+    return res.status(400).json({
+      error: 'part_name_not_part_number',
+      query: partNumber,
+      detail: partNameInputMessage(partNumber),
+    });
+  }
   const part = findPartByNumber(partNumber);
   if (!part) {
     return res.status(404).json({
