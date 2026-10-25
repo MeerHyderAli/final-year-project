@@ -85,7 +85,7 @@ try:
     else:
         print("   WARNING  no generateContent models returned — the key may lack access.")
         ok = False
-except cloud_vision.CloudVisionError as exc:
+except (cloud_vision.CloudVisionError, TimeoutError, OSError) as exc:
     print(f"   FAIL  {exc}")
     print()
     print("   Common causes:")
@@ -115,8 +115,12 @@ try:
         print("        the CORRECT behaviour, not a failure)")
     else:
         print("       it correctly declined to name a category for a blank image")
-except cloud_vision.CloudVisionError as exc:
+except (cloud_vision.CloudVisionError, TimeoutError, OSError) as exc:
     print(f"   FAIL  {exc}")
+    if isinstance(exc, TimeoutError) or "timed out" in str(exc).lower():
+        print("   The API accepted the model-list request, but generation did not answer in time.")
+        print("   Try a longer timeout and the flash model, for example:")
+        print("     VISION_MODEL=gemini-2.5-flash VISION_TIMEOUT=60 bash scripts/check-gemini.sh")
     ok = False
 
 print()

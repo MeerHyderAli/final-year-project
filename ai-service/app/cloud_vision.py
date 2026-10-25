@@ -30,11 +30,11 @@ CONFIGURATION
     VISION_API_KEY  = <key>          (or GEMINI_API_KEY / GOOGLE_API_KEY / ...)
 
     Optional:
-        VISION_MODEL      default gemini-2.0-flash
+        VISION_MODEL      default gemini-2.5-flash
         VISION_BASE_URL   override the endpoint. Used for two things: routing through
                           a proxy, and pointing the tests at a local mock server.
         VISION_TIMEOUT    seconds, default 30
-        VISION_RETRIES    attempts on 429/5xx, default 2
+        VISION_RETRIES    attempts on timeouts, 429/5xx, default 2
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ from .taxonomy import CLASS_KEYS, is_safety_critical, label_for
 DEFAULT_PROVIDER = "gemini"
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-2.0-flash",
+    "gemini": "gemini-2.5-flash",
     "openai": "gpt-4o",
     "anthropic": "claude-sonnet-4-20250514",
 }
@@ -267,8 +267,22 @@ def _post_json(url: str, payload: dict, headers: dict, timeout: int) -> dict:
             retryable=retryable,
             status=exc.code,
         ) from exc
+    except TimeoutError as exc:
+        # Python 3.14 can surface a socket read timeout directly instead of
+        # wrapping it in URLError. Keep it inside the provider-error contract so
+        # the service can fall back cleanly and the diagnostic script never dumps
+        # a raw traceback at the user.
+        raise CloudVisionError(
+            f"provider timed out after {timeout}s; the model may be busy or the network slow. "
+            "Try VISION_TIMEOUT=60 or another VISION_MODEL.",
+            retryable=True,
+        ) from exc
     except urllib.error.URLError as exc:
         raise CloudVisionError(f"provider unreachable: {exc.reason}", retryable=True) from exc
+    except OSError as exc:
+        # TLS resets and other socket failures are transport errors too, not
+        # application bugs. HTTPError/URLError are handled more specifically above.
+        raise CloudVisionError(f"provider connection failed: {exc}", retryable=True) from exc
     except json.JSONDecodeError as exc:
         raise CloudVisionError(f"provider returned non-JSON: {exc}") from exc
 
@@ -579,8 +593,16 @@ def list_models() -> list[str]:
             data = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         raise CloudVisionError(f"HTTP {exc.code} listing models: {exc.read().decode('utf-8', 'replace')[:200]}") from exc
+    except TimeoutError as exc:
+        raise CloudVisionError(
+            f"provider timed out after {timeout}s while listing models; "
+            "check the network or try VISION_TIMEOUT=60",
+            retryable=True,
+        ) from exc
     except urllib.error.URLError as exc:
         raise CloudVisionError(f"provider unreachable: {exc.reason}") from exc
+    except OSError as exc:
+        raise CloudVisionError(f"provider connection failed while listing models: {exc}", retryable=True) from exc
 
     out = []
     for model in data.get("models", []):

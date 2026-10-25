@@ -20,7 +20,7 @@ Endpoints
 
 CONTRACT WITH THE NODE API (backend/src/services/aiClient.js)
     {
-      "modelVersion": "cloud:gemini-2.0-flash",
+      "modelVersion": "cloud:gemini-2.5-flash",
       "backend": "gemini" | "torch" | "heuristic",
       "latencyMs": 812.4,
       "predictions": [{"category": "oil_filter", "label": "Oil Filter",

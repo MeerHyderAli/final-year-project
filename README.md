@@ -128,6 +128,18 @@ launcher. If your installation is not on `PATH`, use `PYTHON=python bash scripts
 `scripts/check-gemini.sh` and `scripts/test.sh`. You do not need to install a second
 copy of Python just because Windows does not provide a `python3` command.
 
+If the key check lists models successfully but the identification call times out,
+the key is working and the generation request is the part needing attention. Try the
+current flash model with a longer read timeout:
+
+```bash
+VISION_MODEL=gemini-2.5-flash VISION_TIMEOUT=60 bash scripts/check-gemini.sh
+```
+
+Use the same two variables when starting `scripts/dev.sh`. A timeout is reported as a
+provider error and triggers the documented fallback; it is never turned into a fake
+identification.
+
 Running the services by hand instead:
 
 ```bash

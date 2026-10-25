@@ -194,12 +194,12 @@ with with_env(VISION_PROVIDER="flux-capacitor", VISION_API_KEY="x"):
 
 print("\n--- model and endpoint defaults ---")
 with with_env(VISION_PROVIDER="gemini", **NO_OVERRIDE):
-    check("gemini default model", cloud_vision.model_name() == "gemini-2.0-flash")
+    check("gemini default model", cloud_vision.model_name() == "gemini-2.5-flash")
     check("gemini default base url", cloud_vision.base_url().startswith("https://generativelanguage"))
 with with_env(VISION_PROVIDER="openai", **NO_OVERRIDE):
     check("openai default model", cloud_vision.model_name() == "gpt-4o")
-with with_env(VISION_PROVIDER="gemini", VISION_MODEL="gemini-2.5-flash"):
-    check("VISION_MODEL overrides", cloud_vision.model_name() == "gemini-2.5-flash")
+with with_env(VISION_PROVIDER="gemini", VISION_MODEL="gemini-2.0-flash"):
+    check("VISION_MODEL overrides", cloud_vision.model_name() == "gemini-2.0-flash")
 with with_env(VISION_PROVIDER="gemini", VISION_BASE_URL="http://127.0.0.1:9099/"):
     check("VISION_BASE_URL overrides and strips slash", cloud_vision.base_url() == "http://127.0.0.1:9099")
 with with_env(VISION_PROVIDER="gemini", VISION_BASE_URL=None):
@@ -313,6 +313,23 @@ def raising(exc):
     def _fn(*a, **k):
         raise exc
     return _fn
+
+
+# Python 3.14 may raise TimeoutError directly from ssl/socket reads rather than
+# wrapping it in URLError. It must still obey the provider-error contract.
+real_urlopen = cloud_vision.urllib.request.urlopen
+try:
+    cloud_vision.urllib.request.urlopen = raising(TimeoutError("simulated read timeout"))
+    try:
+        cloud_vision._post_json("https://example.invalid", {}, {}, 30)
+    except cloud_vision.CloudVisionError as exc:
+        check("socket timeout becomes CloudVisionError", True)
+        check("socket timeout is retryable", exc.retryable is True)
+        check("socket timeout explains the recovery", "VISION_TIMEOUT" in str(exc))
+    else:
+        check("socket timeout becomes CloudVisionError", False, "no exception raised")
+finally:
+    cloud_vision.urllib.request.urlopen = real_urlopen
 
 
 with with_env(VISION_PROVIDER="openai", VISION_API_KEY="test-key", VISION_BASE_URL=None):
