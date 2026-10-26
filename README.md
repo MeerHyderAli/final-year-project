@@ -68,7 +68,7 @@ vehicle-catalogue match in the Express API. The AI never sees fitment data.
                                         │              Gemini / OpenAI / Anthropic
                                         │              (photo · label OCR · description)
                                         ▼
-                              JSON catalogue → MongoDB
+                    JSON demo catalogue OR MongoDB (source of truth)
 ```
 
 Three processes, two languages — the AI provider is isolated behind the Python service
@@ -78,8 +78,8 @@ so a provider outage cannot take the price engine down with it. Full reasoning i
 ## Repository layout
 
 ```
-data/                    seed catalogue (JSON)
-  parts.json             16 parts across 8 categories
+data/                    illustrative seed catalogue (JSON demo)
+  parts.json             18 parts across 8 categories
   vehicles.json          12 vehicles across 5 classes
   vendors.json           8 sellers with coordinates and hours
   offers.json            43 price offers with source + timestamp + stock status
@@ -87,7 +87,8 @@ data/                    seed catalogue (JSON)
 backend/                 Express API
   src/routes/            catalog · identify · ocr · describe · fitment · price · nearby
   src/services/          fitmentService · priceService · nearbyService · geo · aiClient
-  src/store/             JSON store with optional MongoDB mirror
+  src/store/             JSON demo or MongoDB source of truth + validation
+  scripts/               validated supplier/seller catalogue importer
   src/taxonomy.js        canonical category list
 
 ai-service/              Python identification service
@@ -139,6 +140,23 @@ VISION_MODEL=gemini-2.5-flash VISION_TIMEOUT=60 bash scripts/check-gemini.sh
 Use the same two variables when starting `scripts/dev.sh`. A timeout is reported as a
 provider error and triggers the documented fallback; it is never turned into a fake
 identification.
+
+## Persistent catalogue / real data
+
+The default JSON files are **illustrative demo data**, not a live backend inventory.
+For a persistent catalogue, start MongoDB with `docker compose up -d mongo`, set
+`MONGODB_URI`, and import validated supplier/seller records:
+
+```bash
+cd backend
+npm run import:catalogue -- --check-only --dir /path/to/catalogue
+MONGODB_URI=mongodb://127.0.0.1:27017 npm run import:catalogue -- --dir /path/to/catalogue
+```
+
+MongoDB becomes the source of truth when configured; a database outage fails startup
+rather than silently serving demo data. The UI labels the active mode. See
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the schema, provenance requirements and
+the remaining production work (feeds, auth, refresh jobs, backups and monitoring).
 
 Running the services by hand instead:
 
@@ -258,7 +276,8 @@ bash scripts/test.sh                              # both suites
 | `VISION_PROVIDER` | `gemini` | `gemini` \| `openai` \| `anthropic` \| `local` |
 | `VISION_API_KEY` | *(unset)* | Provider key; provider-native names also work |
 | `VISION_MODEL` | provider default | Model id override |
-| `MONGODB_URI` | *(unset)* | Set to mirror the catalogue into MongoDB |
+| `MONGODB_URI` | *(unset)* | Set to use MongoDB as the catalogue source of truth |
+| `SEED_DEMO_DATA` | `false` | Explicitly seed an empty MongoDB with illustrative fixtures |
 | `AI_TIMEOUT_MS` | derived | Node → AI request cap; defaults to the provider timeout/retry budget |
 | `UPLOAD_MAX_BYTES` | `8388608` | Upload limit (8 MB) |
 

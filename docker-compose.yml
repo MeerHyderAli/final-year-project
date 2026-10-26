@@ -1,0 +1,19 @@
+# Persistent catalogue database for local development and deployment testing.
+# The application services still start with scripts/dev.sh; this file provides
+# the real database rather than silently relying on JSON fixtures.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - autoparts_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  autoparts_mongo_data:

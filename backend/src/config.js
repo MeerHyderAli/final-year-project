@@ -33,11 +33,14 @@ export const config = {
   aiTimeoutMs: positiveEnvNumber('AI_TIMEOUT_MS', providerBudgetMs),
 
   /**
-   * Optional MongoDB. When MONGODB_URI is unset the API runs fully offline on the
-   * JSON seed catalogue in `data/` — this is the default for demos and CI.
+   * Optional persistent MongoDB catalogue. With no URI the API is explicitly a
+   * JSON demo; with a URI MongoDB is the source of truth and must be reachable.
    */
   mongoUri: process.env.MONGODB_URI || '',
   mongoDbName: process.env.MONGODB_DB || 'autoparts_ai',
+  // Explicit opt-in for putting the illustrative fixtures into an empty Mongo
+  // database. Never seed a deployment merely because it has no records yet.
+  seedDemoData: process.env.SEED_DEMO_DATA === 'true',
 
   uploadMaxBytes: Number(process.env.UPLOAD_MAX_BYTES || 8 * 1024 * 1024),
 

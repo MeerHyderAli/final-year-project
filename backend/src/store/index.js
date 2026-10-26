@@ -1,23 +1,27 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DATA_DIR, config } from '../config.js';
+import { assertCatalogue, COLLECTIONS } from './validateCatalogue.js';
 
 /**
  * Catalogue store.
  *
- * Two drivers behind one interface:
- *   - `json`  (default) reads data/*.json into memory. Zero infrastructure, works offline.
- *   - `mongo` mirrors the same documents into MongoDB when MONGODB_URI is set.
+ * There are deliberately two visibly different modes:
+ *   - json-demo: read the illustrative fixtures in data/*.json. No setup, demo only.
+ *   - mongo: read the catalogue from MongoDB. This is the persistent deployment mode.
  *
- * The JSON driver is not a toy: it is the same document shape the Mongo collections
- * use, so switching is a config change, not a rewrite.
+ * MongoDB is not a mirror for the JSON demo when MONGODB_URI is set: it is the
+ * source of truth. If it is configured but unavailable, startup fails instead of
+ * silently serving demo prices as though they were live data.
  */
 
-const COLLECTIONS = ['vehicles', 'parts', 'vendors', 'offers'];
+export { COLLECTIONS };
 
 const state = {
-  driver: 'json',
+  driver: 'json-demo',
+  persistent: false,
   mongoReady: false,
+  demoData: true,
   loadedAt: null,
   counts: {},
 };
@@ -32,45 +36,75 @@ async function readJson(name) {
   return parsed;
 }
 
-async function tryMongoMirror(records) {
-  if (!config.mongoUri) return;
+async function readAllJson() {
+  const records = {};
+  for (const name of COLLECTIONS) records[name] = await readJson(name);
+  return records;
+}
+
+async function readMongo(seedRecords) {
+  const { MongoClient } = await import('mongodb');
+  const client = new MongoClient(config.mongoUri, { serverSelectionTimeoutMS: 4000 });
+  let seededDemoData = false;
+
   try {
-    const { MongoClient } = await import('mongodb');
-    const client = new MongoClient(config.mongoUri, { serverSelectionTimeoutMS: 4000 });
     await client.connect();
     const db = client.db(config.mongoDbName);
+    const records = {};
+
     for (const name of COLLECTIONS) {
       const col = db.collection(name);
       await col.createIndex({ id: 1 }, { unique: true });
-      if (records[name].length) {
-        await col.bulkWrite(
-          records[name].map((doc) => ({
-            updateOne: { filter: { id: doc.id }, update: { $set: doc }, upsert: true },
-          })),
-          { ordered: false },
-        );
+
+      // Seeding is opt-in. A production database is never populated with demo
+      // records just because it happens to be empty.
+      if (config.seedDemoData && (await col.countDocuments()) === 0 && seedRecords[name]?.length) {
+        await col.insertMany(seedRecords[name]);
+        seededDemoData = true;
       }
+
+      // Do not leak Mongo's internal _id through the public catalogue API.
+      records[name] = (await col.find({}).toArray()).map(({ _id, ...doc }) => doc);
     }
-    state.driver = 'json+mongo';
+
+    state.driver = 'mongo';
+    state.persistent = true;
     state.mongoReady = true;
-    await client.close();
-    console.log(`[store] mirrored catalogue into MongoDB (${config.mongoDbName})`);
+    state.demoData = seededDemoData;
+    return records;
   } catch (err) {
-    console.warn(`[store] MongoDB mirror skipped: ${err.message}`);
+    state.driver = 'mongo-unavailable';
+    state.persistent = false;
+    state.mongoReady = false;
+    throw new Error(
+      `MongoDB is configured but the catalogue could not be loaded from database "${config.mongoDbName}". ` +
+        'Check MONGODB_URI and MongoDB availability; demo JSON fallback is disabled in this mode.',
+      { cause: err },
+    );
+  } finally {
+    await client.close().catch(() => {});
   }
 }
 
 export async function loadStore() {
-  const records = {};
+  state.driver = config.mongoUri ? 'mongo-unavailable' : 'json-demo';
+  state.persistent = false;
+  state.mongoReady = false;
+  state.demoData = !config.mongoUri;
+
+  // A Mongo-only deployment does not need the JSON fixtures at all. They are read
+  // only for the JSON demo or when explicitly requested for first-time seeding.
+  const seeds = !config.mongoUri || config.seedDemoData ? await readAllJson() : {};
+  const records = config.mongoUri ? await readMongo(seeds) : seeds;
+  assertCatalogue(records);
+
   for (const name of COLLECTIONS) {
-    records[name] = await readJson(name);
-    tables[name] = records[name];
-    state.counts[name] = records[name].length;
+    tables[name] = records[name] || [];
+    state.counts[name] = tables[name].length;
   }
   state.loadedAt = new Date().toISOString();
-  await tryMongoMirror(records);
   console.log(
-    `[store] driver=${state.driver} ` +
+    `[store] driver=${state.driver} persistent=${state.persistent} ` +
       COLLECTIONS.map((c) => `${c}=${state.counts[c]}`).join(' '),
   );
   return state;

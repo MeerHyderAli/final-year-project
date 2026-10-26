@@ -13,6 +13,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+source "$ROOT/scripts/_env.sh"
 source "$ROOT/scripts/_python.sh"
 PROVIDER="${VISION_PROVIDER:-gemini}"
 export VISION_PROVIDER="$PROVIDER"

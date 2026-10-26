@@ -15,6 +15,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+source "$ROOT/scripts/_env.sh"
 source "$ROOT/scripts/_python.sh"
 LOGDIR="$ROOT/.logs"
 mkdir -p "$LOGDIR"

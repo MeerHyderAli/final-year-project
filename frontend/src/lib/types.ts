@@ -175,6 +175,20 @@ export interface DescribeResponse {
   nextSteps: string[];
 }
 
+export interface CatalogueHealth {
+  driver: string;
+  persistent: boolean;
+  mongoReady: boolean;
+  demoData: boolean;
+  loadedAt: string | null;
+  collections: Record<string, number>;
+}
+
+export interface ApiHealth {
+  status: string;
+  catalogue: CatalogueHealth;
+}
+
 export interface AiHealth {
   reachable?: boolean;
   detail?: string;

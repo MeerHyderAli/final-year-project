@@ -74,10 +74,12 @@ addressable, so a partial answer is still useful.
 
 ## Why these specific decisions
 
-**JSON store, MongoDB-shaped.** `store/index.js` reads `data/*.json` into memory
-(loads in milliseconds) and mirrors into MongoDB when `MONGODB_URI` is set. The
-documents are already in Mongo's shape, so the migration is configuration, not a
-rewrite. It also means the demo runs with zero infrastructure.
+**JSON demo, MongoDB source of truth.** With no `MONGODB_URI`, `store/index.js`
+reads the illustrative `data/*.json` fixtures and labels the mode `json-demo`. With a
+URI, it reads MongoDB instead; the database is not a mirror and startup fails if it is
+unavailable. `backend/scripts/import-catalogue.js` validates and upserts real supplier
+or seller records. This keeps the zero-infrastructure demo while providing a persistent
+deployment path — see `docs/DEPLOYMENT.md`.
 
 **Fail loudly, never invent.** When the identification service is unreachable
 `/api/identify` returns **503** with a `fallback` object naming the deterministic route
@@ -110,15 +112,16 @@ is how people buy the wrong brake pad.
 
 - `routes/` handle HTTP only — parse, validate, delegate, shape the response.
 - `services/` hold the domain logic and are pure enough to unit-test without a server.
-- `store/` is the only module that touches data files.
+- `store/` is the only module that reads catalogue data, whether JSON or MongoDB.
 - `taxonomy.js` / `taxonomy.py` must agree; `GET /api/catalog/meta` and
   `GET /classes` exist so a test can assert that they do, rather than letting the
   three copies drift.
 
 ## Known limits
 
-- **No distributed transactions.** Catalogue writes are not implemented in the
-  prototype; the API is read-only over the seed data.
+- **No distributed transactions or admin writes.** The HTTP API is read-only; the
+  separate CLI importer writes validated records. Authentication, scheduled refreshes
+  and conflict resolution remain deployment work.
 - **Provider confidence is a self-report.** The cloud model's confidence is not a
   calibrated probability, so responses tag it `confidenceSource: "model_self_report"` and
   the API warns that it is a coarse hint. Only the optional local model is calibrated.

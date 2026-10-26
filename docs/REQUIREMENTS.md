@@ -32,7 +32,7 @@ in milliseconds.
 | Identification | **Python + FastAPI** | FastAPI generates its OpenAPI schema from the same type hints the code already has. Kept as a *separate process* so a provider outage cannot take the catalogue API down. |
 | AI | **Gemini API** (Google AI Studio), with OpenAI and Anthropic implemented as drop-in alternatives | No training, no image dataset, no GPU, and it reads real photographs properly. The provider is reached with the standard library (`urllib`) — no vendor SDK, so the dependency list stays honest. See §5. |
 | Offline fallback | **NumPy + Pillow + PyTorch** (optional, *not installed by default*) | Keeps a no-internet demo possible. Its measured accuracy on real photographs is 0.258, which is exactly why it is not the default — see `docs/DATASET-AND-MODEL.md`. |
-| Data store | **JSON seed → MongoDB** | Start with zero infrastructure (JSON loads in milliseconds), migrate later without a rewrite — the documents are already in Mongo's shape. |
+| Data store | **JSON demo → MongoDB source of truth** | Start with zero infrastructure; configure MongoDB for persistence and import validated supplier/seller records. A configured database is never silently replaced by demo JSON. See `docs/DEPLOYMENT.md`. |
 | Local OCR (optional) | **PaddleOCR → EasyOCR → Tesseract** | Only for a fully offline deployment. Tried in that order; each is optional and `/ocr` returns 503 with install instructions if none is present. Never invents text. |
 | Maps / location | **Haversine + your own vendor records** | A Maps API tells you a shop exists, not that it stocks a specific part number. Ranking uses distance *plus* stock evidence *plus* vendor trust. |
 
@@ -57,7 +57,7 @@ without either, and `GET /health` reports which engine is therefore answering.
 
 | Data | Where | Status in this repo |
 |---|---|---|
-| Part catalogue (name, number, brand, specs) | `data/parts.json` | ✅ 16 records across 8 categories |
+| Part catalogue (name, number, brand, specs) | `data/parts.json` | ✅ 18 illustrative records across 8 categories; replace/import verified data for deployment |
 | Vehicle master (make, model, years, engine) | `data/vehicles.json` | ✅ 12 records, 5 vehicle classes |
 | Sellers / vendors | `data/vendors.json` | ✅ 8 vendors with coordinates and hours |
 | Seller price offers | `data/offers.json` | ✅ 43 offers with source + timestamp + stock status |

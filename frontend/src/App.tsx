@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from './lib/api';
-import type { AiHealth, AnalysisResponse, DescribeResponse, IdentifyResponse, Vehicle } from './lib/types';
+import type { AiHealth, ApiHealth, AnalysisResponse, DescribeResponse, IdentifyResponse, Vehicle } from './lib/types';
 import { DEFAULT_ORIGIN, useGeolocation, type Coords } from './lib/useGeolocation';
 import { PhotoUpload } from './components/PhotoUpload';
 import { IdentifyPanel } from './components/IdentifyPanel';
@@ -10,6 +10,7 @@ import { PriceTable } from './components/PriceTable';
 import { NearbyList } from './components/NearbyList';
 import { WarningsBanner } from './components/WarningsBanner';
 import { ProviderStatus } from './components/ProviderStatus';
+import { CatalogueStatus } from './components/CatalogueStatus';
 import { DescribeInput } from './components/DescribeInput';
 import { Badge, Card, Notice, Spinner } from './components/ui';
 
@@ -27,6 +28,7 @@ export default function App() {
   const [origin, setOriginState] = useState<Coords>(DEFAULT_ORIGIN);
   const [radiusKm, setRadiusKm] = useState(15);
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [backendHealth, setBackendHealth] = useState<ApiHealth | null>(null);
   const [aiHealth, setAiHealth] = useState<AiHealth | null>(null);
   const [describeResult, setDescribeResult] = useState<DescribeResponse | null>(null);
 
@@ -40,7 +42,10 @@ export default function App() {
       .catch(() => setApiOnline(false));
     api
       .health()
-      .then(() => setApiOnline(true))
+      .then((health) => {
+        setBackendHealth(health);
+        setApiOnline(true);
+      })
       .catch(() => setApiOnline(false));
     api
       .aiHealth()
@@ -246,6 +251,7 @@ export default function App() {
       <main className="layout">
         <div className="col-left">
           <ProviderStatus health={aiHealth} />
+          <CatalogueStatus catalogue={backendHealth?.catalogue ?? null} />
 
           <Card step="Step 1" title="Identify the part">
             <PhotoUpload onFile={onFile} busy={busy === 'identify'} previewUrl={previewUrl} onUsePartNumber={onPartNumber} />
